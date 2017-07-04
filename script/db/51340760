@@ -1,0 +1,50 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><p><strong>Thrift version 0.9.0</strong></p>
+<h1 id="服务端接收和发送数据">服务端接收和发送数据</h1>
+<h2 id="接收数据格式">接收数据格式</h2>
+<h3 id="方法数据格式">方法数据格式</h3>
+<pre class="prettyprint"><code class=" hljs perl">sz, = <span class="hljs-keyword">unpack</span>(<span class="hljs-string">'!i'</span>, <span class="hljs-keyword">socket</span>.<span class="hljs-keyword">recv</span>(<span class="hljs-number">4</span>))
+<span class="hljs-keyword">if</span> sz &lt; <span class="hljs-number">0</span>:
+    version = sz &amp; -<span class="hljs-number">65536</span> <span class="hljs-comment">#版本掩码</span>
+    <span class="hljs-keyword">if</span> version != -<span class="hljs-number">2147418112</span>:
+        raise
+    type = sz &amp; <span class="hljs-number">0x000000ff</span>
+
+    <span class="hljs-comment">#字符串先读取一个INT(4字节)为字符串长度</span>
+    len, = <span class="hljs-keyword">unpack</span>(<span class="hljs-string">'!i'</span>, <span class="hljs-keyword">socket</span>.<span class="hljs-keyword">recv</span>(<span class="hljs-number">4</span>))
+    method = <span class="hljs-keyword">socket</span>.<span class="hljs-keyword">recv</span>(len)<span class="hljs-comment">#读取长度为len的字符串为方法名</span>
+    seqid, = <span class="hljs-keyword">unpack</span>(<span class="hljs-string">'!i'</span>, <span class="hljs-keyword">socket</span>.<span class="hljs-keyword">recv</span>(<span class="hljs-number">4</span>)) <span class="hljs-comment">#读取一个INT(4字节)为序号</span></code></pre>
+<blockquote>
+<p>|——4byte—–|——4byte——|—-method len byte—- |—-4byte—-| <br>
+  |-version/type—|–method len –|—method name ——–|—-seqid—-|</br></p>
+</blockquote>
+<h3 id="参数数据格式">参数数据格式</h3>
+<pre class="prettyprint"><code class=" hljs perl">.......
+<span class="hljs-keyword">while</span> True:
+    ftype, = <span class="hljs-keyword">unpack</span>(<span class="hljs-string">'!b'</span>, <span class="hljs-keyword">socket</span>.<span class="hljs-keyword">recv</span>(<span class="hljs-number">1</span>))
+    <span class="hljs-keyword">if</span> ftype == <span class="hljs-number">0</span>:
+      raise
+    fid, = <span class="hljs-keyword">unpack</span>(<span class="hljs-string">'!h'</span>, <span class="hljs-keyword">socket</span>.<span class="hljs-keyword">recv</span>(<span class="hljs-number">2</span>))
+    <span class="hljs-keyword">if</span> fid == <span class="hljs-number">1</span>:
+        <span class="hljs-keyword">if</span> ftype == <span class="hljs-number">11</span>:
+            len, = <span class="hljs-keyword">unpack</span>(<span class="hljs-string">'!i'</span>, <span class="hljs-keyword">socket</span>.<span class="hljs-keyword">recv</span>(<span class="hljs-number">4</span>))
+            input = <span class="hljs-keyword">socket</span>.<span class="hljs-keyword">recv</span>(len) <span class="hljs-comment">#读取的参数</span>
+ .......</code></pre>
+<p>while: <br>
+    |—–1byte—-|–2byte–|——4byte—— |–argument len byte–| <br>
+    |—–ftype—-|—-fid—-|–argument len -|——argument ——-|</br></br></p>
+<h2 id="返回数据格式">返回数据格式</h2>
+<pre class="prettyprint"><code class=" hljs perl">D = StringIO()
+D.<span class="hljs-keyword">write</span>(<span class="hljs-keyword">pack</span>(<span class="hljs-string">"!i"</span>, (-<span class="hljs-number">2147418112</span>| <span class="hljs-number">2</span>)))  <span class="hljs-comment">#版本</span>
+D.<span class="hljs-keyword">write</span>(<span class="hljs-keyword">pack</span>(<span class="hljs-string">"!i"</span>, len(method)))      <span class="hljs-comment">#请求的方法名字长度</span>
+D.<span class="hljs-keyword">write</span>(method)                     <span class="hljs-comment">#请求的方法</span>
+D.<span class="hljs-keyword">write</span>(<span class="hljs-keyword">pack</span>(<span class="hljs-string">"!i"</span>, seqid))          <span class="hljs-comment">#请求的序号</span>
+D.<span class="hljs-keyword">write</span>(<span class="hljs-keyword">pack</span>(<span class="hljs-string">"!b"</span>, <span class="hljs-number">11</span>))             <span class="hljs-comment">#返回参数的类型 TType 11为字符串</span>
+D.<span class="hljs-keyword">write</span>(<span class="hljs-keyword">pack</span>(<span class="hljs-string">"!h"</span>, <span class="hljs-number">0</span>))              <span class="hljs-comment">#id </span>
+D.<span class="hljs-keyword">write</span>(<span class="hljs-keyword">pack</span>(<span class="hljs-string">"!i"</span>, len(<span class="hljs-string">"2 from server 1024"</span>)))  <span class="hljs-comment">#返回字符串的长度</span>
+D.<span class="hljs-keyword">write</span>(<span class="hljs-string">"2 from server 1024"</span>)       <span class="hljs-comment">#返回字符串</span>
+D.<span class="hljs-keyword">write</span>(<span class="hljs-keyword">pack</span>(<span class="hljs-string">"!b"</span>, <span class="hljs-number">0</span>))              <span class="hljs-comment">#结束</span></code></pre>
+<p>|–4byte-|———–4byte——-|–method len byte– |—-4byte—-|——-4byte—–|-2byte-|–4byte–|–len byte–|-1byte-| <br>
+|—版本–|–请求的方法名字长度-|——请求的方法 —–|-请求的序号-|–返回参数的类型-|—id—|-返回字符串的长度-|-返回字符串-|-结束-|</br></p></div>
+
+</div>

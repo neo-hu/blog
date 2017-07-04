@@ -1,0 +1,100 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="环境">环境：</h1>
+<p>master：Ubuntu 12.04(192.168.31.186)  <br>
+backup: Ubuntu 12.04(192.168.31.110) <br>
+VIP: 192.168.31.100</br></br></p>
+<h1 id="keepalived的原理可以这样简单理解">keepalived的原理可以这样简单理解:</h1>
+<p>keepalived安装在两台物理服务器上，并相互监控对方是否在正常运行。 <br>
+当master正常的时候:master上的keepalived会绑定vip(192.168.8.100)</br></p>
+<pre class="prettyprint"><code class=" hljs applescript">tail -f /var/<span class="hljs-command">log</span>/syslog
+
+Feb <span class="hljs-number">18</span> <span class="hljs-number">05</span>:<span class="hljs-number">41</span>:<span class="hljs-number">41</span> keepalived1 Keepalived_vrrp[<span class="hljs-number">2561</span>]: VRRP_Instance(VI_1) Sending gratuitous ARPs <span class="hljs-function_start"><span class="hljs-keyword">on</span></span> eth0 <span class="hljs-keyword">for</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.100</span>
+Feb <span class="hljs-number">18</span> <span class="hljs-number">05</span>:<span class="hljs-number">41</span>:<span class="hljs-number">41</span> keepalived1 Keepalived_healthcheckers[<span class="hljs-number">2560</span>]: Netlink reflector reports IP <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.100</span> added
+Feb <span class="hljs-number">18</span> <span class="hljs-number">05</span>:<span class="hljs-number">41</span>:<span class="hljs-number">46</span> keepalived1 Keepalived_vrrp[<span class="hljs-number">2561</span>]: VRRP_Instance(VI_1) Sending gratuitous ARPs <span class="hljs-function_start"><span class="hljs-keyword">on</span></span> eth0 <span class="hljs-keyword">for</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.100</span>
+</code></pre>
+<p>当master发生故障的时候，backup上的keepalived会检测到，并且绑定vip(192.168.8.100) <br>
+即虚拟IP漂移至backup <br>
+当master恢复vip又重新绑定</br></br></p>
+<h1 id="安装">安装</h1>
+<pre class="prettyprint"><code class=" hljs cs">apt-<span class="hljs-keyword">get</span> install keepalived</code></pre>
+<h1 id="keepalived配置文件">keepalived配置文件</h1>
+<pre class="prettyprint"><code class=" hljs cs">vim /etc/keepalived/keepalived.conf
+global_defs {
+    router_id L1
+}
+vrrp_instance VI_1 {
+    state MASTER <span class="hljs-comment">//设置服务器模式，需要大写，备用机可以写 state BACKUP</span>
+    <span class="hljs-keyword">interface</span> eth0
+    virtual_router_id <span class="hljs-number">51</span> <span class="hljs-comment">//VRRP组名，两个节点的设置必须一样，以指明各个节点属于同一VRRP组</span>
+    priority <span class="hljs-number">100</span> <span class="hljs-comment">//主节点的优先级（1-254之间），备用节点必须比主节点优先级低</span>
+    advert_int <span class="hljs-number">1</span>  
+    authentication { <span class="hljs-comment">//设置验证信息，两个节点必须一致</span>
+        auth_type PASS
+        auth_pass <span class="hljs-number">123456</span>
+}
+virtual_ipaddress {  <span class="hljs-comment">//指定虚拟IP, 两个节点设置必须一样</span>
+   <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.100</span>
+}</code></pre>
+<p>mastr和backup的区别是 state和priority</p>
+<h1 id="启动">启动</h1>
+<pre class="prettyprint"><code class=" hljs sql">service keepalived <span class="hljs-operator"><span class="hljs-keyword">start</span></span></code></pre>
+<h1 id="测试">测试</h1>
+<p>在两台机器上安装nginx，安装步骤省略 <br>
+安装完成后修改nginx默认页面为不同的内容 <br>
+然后访问 <a href="http://192.168.31.100">http://192.168.31.100</a></br></br></p>
+<p>默认应该显示192.168.31.186的内容 <br>
+然后 重启192.168.31.186或停止192.168.31.186的keepalived 服务 <br>
+这刷新页面 <br>
+显示的是192.168.31.110的内容 <br>
+如果192.168.31.186恢复正常vip会切回到192.168.31.186上</br></br></br></br></p>
+<h1 id="监控http服务">监控http服务</h1>
+<p>修改配置文件</p>
+<pre class="prettyprint"><code class=" hljs mathematica">vim /etc/keepalived/keepalived.conf 
+
+
+global_defs <span class="hljs-list">{
+    router_id master
+}</span>
+vrrp_script chk_nginx_port <span class="hljs-list">{
+    script "/check_nginx.sh"
+    interval 2
+    weight 2
+}</span>
+
+
+
+vrrp_instance VI_1 <span class="hljs-list">{
+    state MASTER
+    interface eth0
+    virtual_router_id 51
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+   }</span>
+   virtual_ipaddress <span class="hljs-list">{
+       192.168.31.100
+   }</span>
+   track_script <span class="hljs-list">{
+      chk_nginx_port
+   }</span>
+}
+</code></pre>
+<pre class="prettyprint"><code class=" hljs bash">vim /check_nginx.sh
+
+
+<span class="hljs-shebang">#!/bin/bash 
+
+</span>
+V_NUM=`<span class="hljs-built_in">eval</span> <span class="hljs-string">"netstat -nlpt | grep '80' | wc -l"</span>`
+
+<span class="hljs-keyword">if</span> [ <span class="hljs-variable">$V_NUM</span> <span class="hljs-operator">-lt</span> <span class="hljs-number">1</span> ];<span class="hljs-keyword">then</span>
+    /etc/init.d/keepalived stop
+    <span class="hljs-keyword">exit</span>
+<span class="hljs-keyword">fi</span>
+</code></pre>
+<p>检查80端口如果没监听，就停止keepalived服务，vip就转到192.168.31.110上</p>
+<p>这时就需要人为的修复http服务，然后重启keepalived服务</p></div>
+
+</div>

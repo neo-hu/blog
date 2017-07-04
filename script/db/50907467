@@ -1,0 +1,118 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="安装">安装</h1>
+<p>环境Ubuntu 12.04+ varnish-4.1.2+nginx</p>
+<pre class="prettyprint"><code class=" hljs lasso">apt<span class="hljs-attribute">-get</span> install apt<span class="hljs-attribute">-transport</span><span class="hljs-attribute">-https</span>
+curl https:<span class="hljs-comment">//repo.varnish-cache.org/GPG-key.txt | apt-key add -</span>
+echo <span class="hljs-string">"deb https://repo.varnish-cache.org/ubuntu/ trusty varnish-4.1"</span> <span class="hljs-subst">&gt;&gt;</span> /etc/apt/sources<span class="hljs-built_in">.</span><span class="hljs-built_in">list</span><span class="hljs-built_in">.</span>d/varnish<span class="hljs-attribute">-cache</span><span class="hljs-built_in">.</span><span class="hljs-built_in">list</span>
+apt<span class="hljs-attribute">-get</span> update
+apt<span class="hljs-attribute">-get</span> install varnish</code></pre>
+<h1 id="端口配置">端口配置</h1>
+<p><em>默认的端口是监听6081</em></p>
+<pre class="prettyprint"><code class=" hljs haml">vim /etc/default/varnish
+
+DAEMON_OPTS="-a :6081 \
+             -<span class="ruby"><span class="hljs-constant">T</span> <span class="hljs-symbol">localhost:</span><span class="hljs-number">6082</span> \
+</span>             -<span class="ruby">f /etc/varnish/default.vcl \
+</span>             -<span class="ruby"><span class="hljs-constant">S</span> /etc/varnish/secret \
+</span>             -<span class="ruby">s malloc,<span class="hljs-number">256</span>m -t <span class="hljs-number">120</span><span class="hljs-string">"</span></span></code></pre>
+<p>-a   #如果希望80端口直接访问修改  <br>
+-t 缓存的时间 <br>
+-s使用的内存 <br>
+-S认证的文件 <code>varnishadm -T localhost:6082 -S secret</code></br></br></br></p>
+<h1 id="配置文件">配置文件</h1>
+<pre class="prettyprint"><code class=" hljs perl">vcl <span class="hljs-number">4.0</span>;
+
+<span class="hljs-comment"># Default backend definition. Set this to point to your content server.</span>
+<span class="hljs-comment">#后端的HTTP服务器IP和端口</span>
+backend default {
+    .host = <span class="hljs-string">"127.0.0.1"</span>;
+    .port = <span class="hljs-string">"8001"</span>;
+}
+
+ <span class="hljs-comment">#设置清理缓存的IP</span>
+acl purgers {
+    <span class="hljs-string">"127.0.0.1"</span>;
+}
+
+<span class="hljs-sub"><span class="hljs-keyword">sub</span> vcl_recv {</span>
+    <span class="hljs-keyword">if</span> (req.method == <span class="hljs-string">"PURGE"</span>) {    <span class="hljs-comment"># PURGE请求的处理</span>
+        <span class="hljs-keyword">if</span> (!client.ip ~ purgers) {
+            <span class="hljs-keyword">return</span>(synth(<span class="hljs-number">405</span>,<span class="hljs-string">"Method not allowed"</span>));
+        }
+        <span class="hljs-comment">#清理缓存</span>
+        <span class="hljs-keyword">return</span>(purge);
+    }
+    <span class="hljs-comment"># 禁止缓存的文件</span>
+    <span class="hljs-keyword">if</span> (req.url ~ <span class="hljs-string">"aaa.html"</span>) {
+        <span class="hljs-keyword">return</span>(pass);
+    }
+    <span class="hljs-keyword">if</span> (req.method != <span class="hljs-string">"GET"</span> &amp;&amp; req.method != <span class="hljs-string">"HEAD"</span>) {
+        <span class="hljs-keyword">return</span> (pass);
+    }
+     <span class="hljs-comment">#不缓存认证信息和Cookie，</span>
+     <span class="hljs-comment">#nginx静态文件默认带Cookie信息，我开始配置的时候一直不能命中缓存查了很久才找到原因在这，</span>
+    <span class="hljs-keyword">if</span> (req.http.Authorization || req.http.Cookie) {
+        <span class="hljs-keyword">return</span> (pass);
+    }
+    <span class="hljs-comment">#不正常的访问不缓存</span>
+    <span class="hljs-keyword">if</span> (req.method != <span class="hljs-string">"GET"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"HEAD"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"PUT"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"POST"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"TRACE"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"OPTIONS"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"PATCH"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"DELETE"</span>) {
+        <span class="hljs-keyword">return</span> (<span class="hljs-keyword">pipe</span>);
+    }
+}
+
+<span class="hljs-sub"><span class="hljs-keyword">sub</span> vcl_backend_response {</span>
+    <span class="hljs-comment"># Happens after we have read the response headers from the backend.</span>
+    <span class="hljs-comment">#</span>
+    <span class="hljs-comment"># Here you clean the response headers, removing silly Set-Cookie headers</span>
+    <span class="hljs-comment"># and other mistakes your backend does.</span>
+}
+
+
+<span class="hljs-sub"><span class="hljs-keyword">sub</span> vcl_deliver {</span>
+ <span class="hljs-keyword">if</span> (obj.hits &gt; <span class="hljs-number">0</span>) {
+        <span class="hljs-comment">#如果命中缓存 Response Headers x-cache-lookup= MemCache</span>
+        set resp.http.<span class="hljs-keyword">x</span>-cache= <span class="hljs-string">"MemCache"</span>;
+    } <span class="hljs-keyword">else</span> {
+        set resp.http.<span class="hljs-keyword">x</span>-cache= <span class="hljs-string">"MISS"</span>;
+    }
+    <span class="hljs-comment">#删除Response Headers 部分信息</span>
+    <span class="hljs-comment">#unset resp.http.Server;</span>
+    <span class="hljs-comment">#unset resp.http.X-Drupal-Cache;</span>
+    <span class="hljs-comment">#unset resp.http.X-Varnish;</span>
+    <span class="hljs-comment">#unset resp.http.Via;</span>
+    <span class="hljs-comment">#unset resp.http.Age;</span>
+    <span class="hljs-comment">#unset resp.http.Link;</span>
+}</code></pre>
+<p><em>我用的是varnish-4.1.2 不同的版本配置不一致</em> <br>
+<strong>详细的配置模板</strong> <br>
+<a href="https://github.com/mattiasgeniar/varnish-4.0-configuration-templates/blob/master/default.vcl">https://github.com/mattiasgeniar/varnish-4.0-configuration-templates/blob/master/default.vcl</a></br></br></p>
+<h1 id="效果">效果</h1>
+<p>第一次访问没缓存 <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160316185004940" title=""/></br></p>
+<p>再刷新一次 <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160316185136707" title=""/></br></p>
+<p>也可以查看后台的nginx的日志</p>
+<p><strong>Varnish默认遵循源：根据Cache-Control的规则进行缓存。如果请求头里面有Cache-Control:no-cache 或者 Age:0是不缓存的，比如Ctrl+F5 刷新浏览器会在请求头里面加Cache-Control:no-cache</strong> <br>
+<strong>如果想缓存，可以在程序或者nginx 加 expires 15d; 也可以修改Varnish配置</strong></br></p>
+<pre class="prettyprint"><code class=" hljs perl"><span class="hljs-sub"><span class="hljs-keyword">sub</span> vcl_backend_response {</span>
+  set beresp.http.Cache-Control = <span class="hljs-string">"public"</span>;
+}</code></pre>
+<p><a href="http://www.ip8.me:8888/all/">我的个人网址全站加了缓存，每次添加或者修改后都需要清理缓存</a></p>
+<h1 id="清理缓存">清理缓存</h1>
+<p>配置文件指定了PURGE和IP 就可以用<code>curl</code> 清理缓存</p>
+<pre class="prettyprint"><code class=" hljs lasso">curl <span class="hljs-attribute">-X</span> PURGE http:<span class="hljs-comment">//127.0.0.1:6081/ </span></code></pre>
+<h1 id="缓存命中率">缓存命中率</h1>
+<p>缓存命中率的高低，直接反映Varnish的运行状态，以下通过varnishstat命令查看状态信息</p>
+<pre class="prettyprint"><code class=" hljs ">varnishstat</code></pre>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160316185644436" title=""/></p>
+<p>Hitrate n 第一个数字范围0-10，第二个数字范围0-100，第三个数字范围0-1000。分别表示过去N秒内的 <br>
+  avg(n) 里的内容是命中率，需要乘以100转换成百分比 。</br></p></div>
+
+</div>

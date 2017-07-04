@@ -1,0 +1,234 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="nagios安装">nagios安装</h1>
+<pre class="prettyprint"><code class=" hljs vala">apt-<span class="hljs-keyword">get</span> install nagios3
+<span class="hljs-preprocessor">#Nagios web administration password </span>
+<span class="hljs-preprocessor">#123123</span></code></pre>
+<blockquote>
+<p>默认安装apache2 监听80端口 <br>
+  访问 <a href="http://10.10.100.54/nagios3/">http://10.10.100.54/nagios3/</a> <br>
+  默认管理员是nagiosadmin 密码自己设置的 <br>
+  密码文件/etc/nagios3/htpasswd.users</br></br></br></p>
+</blockquote>
+<h2 id="修改管理员密码">修改管理员密码</h2>
+<pre class="prettyprint"><code class=" hljs lasso">htpasswd <span class="hljs-attribute">-c</span> /etc/nagios3/htpasswd<span class="hljs-built_in">.</span>users admin
+<span class="hljs-literal">New</span> password: 
+<span class="hljs-number">123123</span>
+Re<span class="hljs-attribute">-type</span> <span class="hljs-literal">new</span> password: 
+<span class="hljs-number">123123</span></code></pre>
+<h2 id="设置管理员权限">设置管理员权限</h2>
+<pre class="prettyprint"><code class=" hljs makefile">vim /etc/nagios3/cgi.cfg
+
+<span class="hljs-constant">use_authentication</span>=1
+<span class="hljs-constant">authorized_for_system_information</span>=admin
+<span class="hljs-constant">authorized_for_configuration_information</span>=admin
+<span class="hljs-constant">authorized_for_system_commands</span>=admin
+<span class="hljs-constant">authorized_for_all_services</span>=admin
+<span class="hljs-constant">authorized_for_all_hosts</span>=admin
+<span class="hljs-constant">authorized_for_all_service_commands</span>=admin
+<span class="hljs-constant">authorized_for_all_host_commands</span>=admin
+</code></pre>
+<h2 id="手动执行任务">手动执行任务</h2>
+<pre class="prettyprint"><code class=" hljs avrasm">vim /etc/nagios3/nagios<span class="hljs-preprocessor">.cfg</span> 
+check_external_commands=<span class="hljs-number">1</span> <span class="hljs-preprocessor">#允许手动这页面上执行任务 **System&gt;Scheduling Queue**</span></code></pre>
+<h3 id="错误">错误</h3>
+<pre class="prettyprint"><code class=" hljs livecodeserver"><span class="hljs-comment">#有可能报错</span>
+Error: Could <span class="hljs-operator">not</span> stat() <span class="hljs-command"><span class="hljs-keyword">command</span> <span class="hljs-title">file</span> <span class="hljs-string">'/var/lib/nagios3/rw/nagios.cmd'</span>!</span>
+sudo /etc/init.d/nagios3 stop
+sudo dpkg-statoverride <span class="hljs-comment">--update --add nagios www-data 2710 /var/lib/nagios3/rw</span>
+sudo dpkg-statoverride <span class="hljs-comment">--update --add nagios nagios 751 /var/lib/nagios3</span>
+sudo /etc/init.d/nagios3 start</code></pre>
+<blockquote>
+<p>重启服务就可以看到页面的<strong>Current Status&gt;Hosts</strong>已经默认监控本机</p>
+</blockquote>
+<h1 id="添加需要监控的主机">添加需要监控的主机</h1>
+<pre class="prettyprint"><code class=" hljs avrasm">vim /etc/nagios3/conf<span class="hljs-preprocessor">.d</span>/hosts<span class="hljs-preprocessor">.cfg</span> <span class="hljs-preprocessor">#默认没这文件</span>
+
+define host {
+    use generic-host
+    host_name lvs  <span class="hljs-preprocessor">#主机名称  </span>
+    alias lvs <span class="hljs-preprocessor">#主机别名不设置默认为host_name</span>
+    address <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.100</span> <span class="hljs-preprocessor">#需要监控主机的IP</span>
+    check_interval <span class="hljs-number">1</span><span class="hljs-preprocessor">#检查的间隔 1分钟</span>
+}
+</code></pre>
+<h1 id="定义主机组">定义主机组</h1>
+<pre class="prettyprint"><code class=" hljs livecodeserver">vim /etc/nagios3/conf.d/hostgroups_nagios2.cfg
+
+<span class="hljs-comment"># Some generic hostgroup definitions</span>
+
+<span class="hljs-comment"># A simple wildcard hostgroup</span>
+define hostgroup {
+        hostgroup_name  all
+                <span class="hljs-built_in">alias</span>           All Servers
+                members         *  <span class="hljs-comment">#所有的主机的组</span>
+        }
+
+<span class="hljs-comment"># A list of your Debian GNU/Linux servers</span>
+define hostgroup {
+        hostgroup_name  debian-servers
+                <span class="hljs-built_in">alias</span>           Debian GNU/Linux Servers
+                members         localhost
+        }
+
+<span class="hljs-comment"># A list of your web servers</span>
+define hostgroup {
+        hostgroup_name  <span class="hljs-keyword">http</span>-servers
+                <span class="hljs-built_in">alias</span>           HTTP servers
+                members         localhost,lvs <span class="hljs-comment">#指定组的主机,按,分割，可以添加多个，</span>
+        }
+
+<span class="hljs-comment"># A list of your ssh-accessible servers</span>
+define hostgroup {
+        hostgroup_name  ssh-servers
+                <span class="hljs-built_in">alias</span>           SSH servers
+                members         localhost
+        }
+
+<span class="hljs-comment">#添加ftp监控</span>
+define hostgroup {
+        hostgroup_name  <span class="hljs-keyword">ftp</span>-servers
+        <span class="hljs-built_in">alias</span>           FTP Servers
+        members         lvs
+}</code></pre>
+<h1 id="定义服务项">定义服务项</h1>
+<pre class="prettyprint"><code class=" hljs php">vim /etc/nagios3/conf.d/services_nagios2.cfg
+<span class="hljs-comment"># check that web services are running</span>
+define service {
+        hostgroup_name                  http-servers
+        service_description             HTTP
+        check_command                   check_http
+        <span class="hljs-keyword">use</span>                             <span class="hljs-title">generic</span>-<span class="hljs-title">service</span>
+        <span class="hljs-title">notification_interval</span>           0 ; set &gt; <span class="hljs-number">0</span> <span class="hljs-keyword">if</span> you want to be renotified
+}
+
+<span class="hljs-comment"># check that ssh services are running</span>
+define service {
+        hostgroup_name                  ssh-servers
+        service_description             SSH
+        check_command                   check_ssh
+        <span class="hljs-keyword">use</span>                             <span class="hljs-title">generic</span>-<span class="hljs-title">service</span>
+        <span class="hljs-title">notification_interval</span>           0 ; set &gt; <span class="hljs-number">0</span> <span class="hljs-keyword">if</span> you want to be renotified
+}
+
+<span class="hljs-comment"># check that ssh services are running</span>
+define service {
+        hostgroup_name                  ftp-servers  <span class="hljs-comment">#这必须在hostgroups_nagios2.cfg有这个主机组        </span>
+        service_description             FTP
+        check_command                   check_ftp ;检查FTP,插件默认路径为/usr/lib/nagios/plugins/
+        <span class="hljs-keyword">use</span>                             <span class="hljs-title">generic</span>-<span class="hljs-title">service</span>
+        <span class="hljs-title">notification_interval</span>           1 ; 通知间隔 <span class="hljs-number">0</span>为不通知
+
+}
+
+}
+</code></pre>
+<h1 id="nrpe">NRPE</h1>
+<p>我要监控远程主机的 CPU、硬盘空间、内存等等 <br>
+Nagios 提供了一个外挂插件，叫 NRPE <br>
+它可以让 nagios server 在固定时间去抓 nagios client 被监控的项目回来判断是否ok。 和zabbix agent功能类似</br></br></p>
+<h2 id="远端">远端</h2>
+<pre class="prettyprint"><code class=" hljs livecodeserver"><span class="hljs-comment">#这需要监控的机器上安装</span>
+apt-<span class="hljs-built_in">get</span> install nagios-nrpe-server
+vim /etc/nagios/nrpe.cfg
+......
+allowed_hosts=<span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.54</span> <span class="hljs-comment">#Nagios服务器端的地址</span>
+......
+
+<span class="hljs-comment">#添加监控项</span>
+<span class="hljs-comment">#当前登录的用户大于1警告（warning），大于2危急(critical)</span>
+<span class="hljs-command"><span class="hljs-keyword">command</span>[<span class="hljs-title">check_users</span>]=/<span class="hljs-title">usr</span>/<span class="hljs-title">lib</span>/<span class="hljs-title">nagios</span>/<span class="hljs-title">plugins</span>/<span class="hljs-title">check_users</span> -<span class="hljs-title">w</span> <span class="hljs-title">1</span> -<span class="hljs-title">c</span> <span class="hljs-title">2</span></span>
+<span class="hljs-comment">#同load average</span>
+<span class="hljs-comment">#当1分钟多于15个进程等待,5分钟多于10个,15分钟多于5个则为警告状态</span>
+<span class="hljs-comment">#当1分钟多于30个进程等待,5分钟多于25个,15分钟多于20个则为危急状态</span>
+<span class="hljs-command"><span class="hljs-keyword">command</span>[<span class="hljs-title">check_load</span>]=/<span class="hljs-title">usr</span>/<span class="hljs-title">lib</span>/<span class="hljs-title">nagios</span>/<span class="hljs-title">plugins</span>/<span class="hljs-title">check_load</span> -<span class="hljs-title">w</span> <span class="hljs-title">15</span>,<span class="hljs-title">10</span>,<span class="hljs-title">5</span> -<span class="hljs-title">c</span> <span class="hljs-title">30</span>,<span class="hljs-title">25</span>,<span class="hljs-title">20</span></span>
+<span class="hljs-comment">#如果空闲空间小于40%就是警告阀值</span>
+<span class="hljs-comment">#如果空闲空间小于10%就是危急阀值</span>
+<span class="hljs-comment">#-p分区</span>
+<span class="hljs-command"><span class="hljs-keyword">command</span>[<span class="hljs-title">check_hda1</span>]=/<span class="hljs-title">usr</span>/<span class="hljs-title">lib</span>/<span class="hljs-title">nagios</span>/<span class="hljs-title">plugins</span>/<span class="hljs-title">check_disk</span> -<span class="hljs-title">w</span> <span class="hljs-title">40</span>% -<span class="hljs-title">c</span> <span class="hljs-title">10</span>% -<span class="hljs-title">p</span> /<span class="hljs-title">dev</span>/<span class="hljs-title">sda1</span> </span>
+<span class="hljs-comment">#检查进程</span>
+<span class="hljs-command"><span class="hljs-keyword">command</span>[<span class="hljs-title">check_zombie_procs</span>]=/<span class="hljs-title">usr</span>/<span class="hljs-title">lib</span>/<span class="hljs-title">nagios</span>/<span class="hljs-title">plugins</span>/<span class="hljs-title">check_procs</span> -<span class="hljs-title">w</span> <span class="hljs-title">5</span> -<span class="hljs-title">c</span> <span class="hljs-title">10</span> -<span class="hljs-title">s</span> <span class="hljs-title">Z</span></span>
+<span class="hljs-command"><span class="hljs-keyword">command</span>[<span class="hljs-title">check_total_procs</span>]=/<span class="hljs-title">usr</span>/<span class="hljs-title">lib</span>/<span class="hljs-title">nagios</span>/<span class="hljs-title">plugins</span>/<span class="hljs-title">check_procs</span> -<span class="hljs-title">w</span> <span class="hljs-title">150</span> -<span class="hljs-title">c</span> <span class="hljs-title">200</span></span>
+......</code></pre>
+<pre class="prettyprint"><code class=" hljs vala"><span class="hljs-preprocessor">#重启服务</span>
+service nagios-nrpe-server restart</code></pre>
+<h2 id="监控端">监控端</h2>
+<pre class="prettyprint"><code class=" hljs vala">apt-<span class="hljs-keyword">get</span> install nagios-nrpe-plugin
+<span class="hljs-preprocessor">#检查通讯是否正常</span>
+/usr/lib/nagios/plugins/check_nrpe -H <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.100</span>
+NRPE v2<span class="hljs-number">.15</span></code></pre>
+<pre class="prettyprint"><code class=" hljs glsl">vim /etc/nagios-plugins/config/check_nrpe.cfg
+
+.......
+<span class="hljs-preprocessor">#添加</span>
+define service {
+        use                             generic-service
+        hostgroup_name                  <span class="hljs-built_in">all</span>
+        service_description             NRPE check_hda1 <span class="hljs-preprocessor">#和监控端的 command[check_hda1]对应</span>
+        check_command                   check_nrpe_1arg!check_hda1
+        notification_interval           <span class="hljs-number">0</span>
+}
+
+define service {
+        use                             generic-service
+        hostgroup_name                  <span class="hljs-built_in">all</span>
+        service_description             NRPE check_total_procs
+        check_command                   check_nrpe_1arg!check_total_procs
+        notification_interval           <span class="hljs-number">0</span>
+}
+
+define service {
+        use                             generic-service
+        hostgroup_name                  <span class="hljs-built_in">all</span>
+        service_description             NRPE check_users
+        check_command                   check_nrpe_1arg!check_users
+        notification_interval           <span class="hljs-number">0</span>
+}</code></pre>
+<p><strong>重启服务后就可以看到效果</strong></p>
+<h1 id="通知">通知</h1>
+<h2 id="定义联系人">定义联系人</h2>
+<pre class="prettyprint"><code class=" hljs avrasm">vim /etc/nagios3/conf<span class="hljs-preprocessor">.d</span>/contacts_nagios2<span class="hljs-preprocessor">.cfg</span>
+
+
+define contact{
+        contact_name                    hu  <span class="hljs-preprocessor">#联系人称呼</span>
+        service_notification_period     <span class="hljs-number">24</span>x7 <span class="hljs-preprocessor">#当服务出现异常时，发送通知的时间段，这个时间段"7x24"在timeperiods_nagios2.cfg文件中定义  </span>
+        host_notification_period        <span class="hljs-number">24</span>x7 <span class="hljs-preprocessor">#当主机出现异常时，发送通知的时间段，这个时间段"7x24"在timeperiods_nagios2.cfg文件中定义  </span>
+        service_notification_options    w,u,c,r  <span class="hljs-preprocessor">#这个定义的是"通知可以被发出的情况"。w（warn）表示警告状态，u（unknown）表示不明状态，c（criticle）表示紧急状态，r（recover）表示恢复状态。也就是在服务出现警告状态、未知状态、紧急状态和重新恢复状态时都发送通知给使用者。  </span>
+        host_notification_options       d,r <span class="hljs-preprocessor">#定义主机在什么状态下需要发送通知给使用者，d（down）表示宕机状态，r（recovery）表示重新恢复状态。  </span>
+        service_notification_commands   notify-service-by-email  <span class="hljs-preprocessor">#服务故障时，发送通知的方式，可以是邮件和短信，这里发送的方式是邮件，在commands.cfg文件中定义  </span>
+        host_notification_commands      notify-host-by-email <span class="hljs-preprocessor">#主机故障时，发送通知的方式，可以是邮件和短信，这里发送的方式是邮件，在commands.cfg文件中定义</span>
+        email                           xxx@xxx<span class="hljs-preprocessor">.com</span> <span class="hljs-preprocessor">#发送邮件的邮箱</span>
+}
+</code></pre>
+<h2 id="定义联系人组">定义联系人组</h2>
+<pre class="prettyprint"><code class=" hljs bash">define contactgroup{
+        contactgroup_name       hus
+        members                 hu  <span class="hljs-comment">#多个人用,分割</span>
+        }
+</code></pre>
+<h2 id="定义服务器异常的联系人">定义服务器异常的联系人</h2>
+<pre class="prettyprint"><code class=" hljs glsl">vim /etc/nagios-plugins/config/check_nrpe.cfg
+
+define service {
+        use                             generic-service
+        hostgroup_name                  <span class="hljs-built_in">all</span>
+        service_description             NRPE check_hda1 
+        check_command                   check_nrpe_1arg!check_hda1
+        contact_groups                  hus <span class="hljs-preprocessor">#如果有异常通知hus组的人</span>
+}</code></pre>
+<h2 id="添加发送邮件">添加发送邮件</h2>
+<pre class="prettyprint"><code class=" hljs perl">vim /etc/nagios3/commands.cfg
+
+<span class="hljs-comment">#测试使用sendEmail发送QQ邮件</span>
+define command{
+        command_name    notify-host-by-email <span class="hljs-comment">#contact里面定义的host_notification_commands</span>
+        command_line    /usr/bin/<span class="hljs-keyword">printf</span> <span class="hljs-string">"<span class="hljs-variable">%b</span>"</span> <span class="hljs-string">"<span class="hljs-variable">**</span><span class="hljs-variable">**</span>* Nagios <span class="hljs-variable">**</span><span class="hljs-variable">**</span><span class="hljs-variable">*\</span>n\nNotification Type: <span class="hljs-variable">$NOTIFICATIONTYPE</span><span class="hljs-variable">$\</span>nHost: <span class="hljs-variable">$HOSTNAME</span><span class="hljs-variable">$\</span>nState: <span class="hljs-variable">$HOSTSTATE</span><span class="hljs-variable">$\</span>nAddress: <span class="hljs-variable">$HOSTADDRESS</span><span class="hljs-variable">$\</span>nInfo: <span class="hljs-variable">$HOSTOUTPUT</span><span class="hljs-variable">$\</span>n\nDate/Time: <span class="hljs-variable">$LONGDATETIME</span><span class="hljs-variable">$\</span>n"</span> |sendEmail -f <span class="hljs-number">9656951</span><span class="hljs-variable">@qq</span>.com -t <span class="hljs-variable">$CONTACTEMAIL</span>$ -<span class="hljs-keyword">s</span> smtp.qq.com -u <span class="hljs-string">"<span class="hljs-variable">**</span> 主机: <span class="hljs-variable">$HOSTALIAS</span>$ is <span class="hljs-variable">$HOSTSTATE</span>$ <span class="hljs-variable">**</span>"</span> -xu <span class="hljs-number">9656951</span><span class="hljs-variable">@qq</span>.com -xp xxxxxx
+        }
+
+define command{
+        command_name    notify-service-by-email <span class="hljs-comment">#contact里面定义的service_notification_commands</span>
+        command_line    /usr/bin/<span class="hljs-keyword">printf</span> <span class="hljs-string">"<span class="hljs-variable">%b</span>"</span> <span class="hljs-string">"<span class="hljs-variable">**</span><span class="hljs-variable">**</span>* Nagios <span class="hljs-variable">**</span><span class="hljs-variable">**</span><span class="hljs-variable">*\</span>n\nNotification Type: <span class="hljs-variable">$NOTIFICATIONTYPE</span><span class="hljs-variable">$\</span>n\nService: <span class="hljs-variable">$SERVICEDESC</span><span class="hljs-variable">$\</span>nHost: <span class="hljs-variable">$HOSTALIAS</span><span class="hljs-variable">$\</span>nAddress: <span class="hljs-variable">$HOSTADDRESS</span><span class="hljs-variable">$\</span>nState: <span class="hljs-variable">$SERVICESTATE</span><span class="hljs-variable">$\</span>n\nDate/Time: <span class="hljs-variable">$LONGDATETIME</span><span class="hljs-variable">$\</span>n\nAdditional Info:\n\n<span class="hljs-variable">$SERVICEOUTPUT</span><span class="hljs-variable">$"</span>  |sendEmail -f 9656951<span class="hljs-variable">@qq</span>.com -t <span class="hljs-variable">$CONTACTEMAIL</span>$ -s smtp.qq.com -u "</span><span class="hljs-variable">**</span> 主机: <span class="hljs-variable">$HOSTALIAS</span>$ 服务: <span class="hljs-variable">$SERVICEDESC</span>$ is <span class="hljs-variable">$SERVICESTATE</span>$ <span class="hljs-variable">**</span><span class="hljs-string">" -xu 9656951<span class="hljs-variable">@qq</span>.com -xp xxx
+        }
+</span></code></pre></div>
+
+</div>

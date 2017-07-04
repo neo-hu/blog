@@ -1,0 +1,32 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><blockquote>
+<p>需求外网访问内网的WEB服务器</p>
+<p>我的测试环境：VMware workstation + 2台 Ubuntu 12.04.5 LTS 版本的。 <br>
+  转发外网服务器2个网卡一个192.168.31.206，一个10.10.100.52 ) <br>
+  内网服务器：10.10.100.51</br></br></p>
+</blockquote>
+<h3 id="转发服务器配置">转发服务器配置</h3>
+<pre class="prettyprint"><code class=" hljs lasso">iptables <span class="hljs-attribute">-t</span> nat <span class="hljs-attribute">-A</span> PREROUTING <span class="hljs-attribute">-d</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.206</span> <span class="hljs-attribute">-p</span> tcp <span class="hljs-subst">--</span>dport <span class="hljs-number">80</span> <span class="hljs-attribute">-j</span> DNAT <span class="hljs-subst">--</span><span class="hljs-keyword">to</span><span class="hljs-attribute">-destination</span> <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.51</span>:<span class="hljs-number">80</span>
+iptables <span class="hljs-attribute">-t</span> nat <span class="hljs-attribute">-A</span> OUTPUT <span class="hljs-attribute">-d</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.206</span> <span class="hljs-attribute">-p</span> tcp <span class="hljs-subst">--</span>dport <span class="hljs-number">80</span> <span class="hljs-attribute">-j</span> DNAT <span class="hljs-subst">--</span><span class="hljs-keyword">to</span><span class="hljs-attribute">-destination</span> <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.51</span>:<span class="hljs-number">80</span><span class="hljs-comment">//本机访问需要添加OUTPUT </span>
+
+iptables <span class="hljs-attribute">-t</span> nat <span class="hljs-attribute">-A</span> POSTROUTING <span class="hljs-attribute">-j</span> MASQUERADE</code></pre>
+<pre class="prettyprint"><code class=" hljs livecodeserver">//查看规则
+root@ubuntu:/home/hu<span class="hljs-comment"># iptables -t nat --list --lin</span>
+Chain PREROUTING (policy ACCEPT)
+<span class="hljs-built_in">num</span>  target     prot opt source               destination         
+<span class="hljs-number">1</span>    DNAT       tcp  <span class="hljs-comment">--  anywhere             192.168.31.206       tcp dpt:http to:10.10.100.51:80</span>
+
+Chain INPUT (policy ACCEPT)
+<span class="hljs-built_in">num</span>  target     prot opt source               destination         
+
+Chain OUTPUT (policy ACCEPT)
+<span class="hljs-built_in">num</span>  target     prot opt source               destination          
+<span class="hljs-number">1</span>    DNAT       tcp  <span class="hljs-comment">--  anywhere             192.168.31.206       tcp dpt:http to:10.10.100.51:80     </span>
+
+Chain POSTROUTING (policy ACCEPT)
+<span class="hljs-built_in">num</span>  target     prot opt source               destination         
+<span class="hljs-number">1</span>    MASQUERADE all  <span class="hljs-comment">--  anywhere             anywhere             </span></code></pre>
+<pre class="prettyprint"><code class=" hljs lasso"><span class="hljs-comment">//删除规则</span>
+iptables <span class="hljs-attribute">-t</span> nat <span class="hljs-attribute">-D</span> PREROUTING <span class="hljs-number">1</span>   <span class="hljs-comment">//序号从1 开始，后边以此+1.</span></code></pre></div>
+
+</div>

@@ -1,0 +1,61 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><p>pssh是一个python编写可以在多台服务器上批量执行命令的工具</p>
+<h3 id="前提必须每台服务器添加管理服务器的的密钥认证访问">前提必须每台服务器添加管理服务器的的密钥认证访问</h3>
+<h3 id="安装">安装</h3>
+<pre class="prettyprint"><code class=" hljs bash"><span class="hljs-built_in">sudo</span> apt-get install pssh</code></pre>
+<h3 id="创建需要管理的服务器的用户和ip文件">创建需要管理的服务器的用户和IP文件</h3>
+<pre class="prettyprint"><code class=" hljs ruby">root<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:/home/hu</span><span class="hljs-comment"># cat lvs.txt </span>
+root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">51</span>
+root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">53</span></code></pre>
+<h3 id="pssh-多主机并行运行命令">pssh 多主机并行运行命令</h3>
+<pre class="prettyprint"><code class=" hljs ruby">hu<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>pssh -h lvs.txt -i <span class="hljs-string">'pwd'</span>
+[<span class="hljs-number">1</span>] <span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">03</span><span class="hljs-symbol">:</span><span class="hljs-number">51</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">51</span>
+/root
+[<span class="hljs-number">2</span>] <span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">03</span><span class="hljs-symbol">:</span><span class="hljs-number">51</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">53</span>
+/root</code></pre>
+<p>或者</p>
+<pre class="prettyprint"><code class=" hljs ruby">hu<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>pssh -<span class="hljs-constant">H</span> root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">51</span> -i <span class="hljs-string">'pwd'</span>
+[<span class="hljs-number">1</span>] <span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">04</span><span class="hljs-symbol">:</span><span class="hljs-number">26</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">51</span>
+/root</code></pre>
+<h3 id="pscp-把文件并行地复制到多个主机上">pscp  把文件并行地复制到多个主机上</h3>
+<pre class="prettyprint"><code class=" hljs ruby">hu<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>touch  /tmp/a1
+hu<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>pscp -h lvs.txt /tmp/a1 /tmp/
+[<span class="hljs-number">1</span>] <span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">06</span><span class="hljs-symbol">:</span><span class="hljs-number">44</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">51</span>
+[<span class="hljs-number">2</span>] <span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">06</span><span class="hljs-symbol">:</span><span class="hljs-number">44</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">53</span>
+hu<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>pssh -h lvs.txt -i <span class="hljs-string">'ls /tmp/a1'</span>
+[<span class="hljs-number">1</span>] <span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">07</span><span class="hljs-symbol">:</span><span class="hljs-number">21</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">51</span>
+/tmp/a1
+[<span class="hljs-number">2</span>] <span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">07</span><span class="hljs-symbol">:</span><span class="hljs-number">21</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">53</span>
+/tmp/a1
+</code></pre>
+<h3 id="pslurp-将文件从远程主机复制到本地和pscp方向相反">pslurp 将文件从远程主机复制到本地,和pscp方向相反</h3>
+<pre class="prettyprint"><code class=" hljs ruby">hu<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>pslurp -h lvs.txt   -<span class="hljs-constant">L</span> /tmp/ -l root /tmp/a1 a2
+[<span class="hljs-number">1</span>] <span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">10</span><span class="hljs-symbol">:</span><span class="hljs-number">46</span> [<span class="hljs-constant">SUCCESS</span>] <span class="hljs-number">10.10</span>.<span class="hljs-number">100.51</span>
+[<span class="hljs-number">2</span>] <span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">10</span><span class="hljs-symbol">:</span><span class="hljs-number">46</span> [<span class="hljs-constant">SUCCESS</span>] <span class="hljs-number">10.10</span>.<span class="hljs-number">100.53</span>
+</code></pre>
+<blockquote>
+<p>标示将目标服务器的/tmp/a1文件复制到本地的/tmp/目录下,并更名为a2</p>
+</blockquote>
+<pre class="prettyprint"><code class=" hljs lasso">hu@ubuntu:~$ ll /tmp/<span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-built_in">.</span><span class="hljs-subst">*</span>
+/tmp/<span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.51</span>:
+总用量 <span class="hljs-number">24</span>
+drwxrwxr<span class="hljs-attribute">-x</span>  <span class="hljs-number">2</span> hu   hu    <span class="hljs-number">4096</span>  <span class="hljs-number">2</span>月 <span class="hljs-number">13</span> <span class="hljs-number">21</span>:<span class="hljs-number">10</span> <span class="hljs-built_in">.</span><span class="hljs-subst">/</span>
+drwxrwxrwt <span class="hljs-number">12</span> root root <span class="hljs-number">20480</span>  <span class="hljs-number">2</span>月 <span class="hljs-number">13</span> <span class="hljs-number">21</span>:<span class="hljs-number">10</span> <span class="hljs-built_in">..</span><span class="hljs-subst">/</span>
+<span class="hljs-attribute">-rw</span><span class="hljs-attribute">-r</span><span class="hljs-subst">--</span>r<span class="hljs-subst">--</span>  <span class="hljs-number">1</span> hu   hu       <span class="hljs-number">0</span>  <span class="hljs-number">2</span>月 <span class="hljs-number">13</span> <span class="hljs-number">21</span>:<span class="hljs-number">10</span> a2
+
+/tmp/<span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.53</span>:
+总用量 <span class="hljs-number">24</span>
+drwxrwxr<span class="hljs-attribute">-x</span>  <span class="hljs-number">2</span> hu   hu    <span class="hljs-number">4096</span>  <span class="hljs-number">2</span>月 <span class="hljs-number">13</span> <span class="hljs-number">21</span>:<span class="hljs-number">10</span> <span class="hljs-built_in">.</span><span class="hljs-subst">/</span>
+drwxrwxrwt <span class="hljs-number">12</span> root root <span class="hljs-number">20480</span>  <span class="hljs-number">2</span>月 <span class="hljs-number">13</span> <span class="hljs-number">21</span>:<span class="hljs-number">10</span> <span class="hljs-built_in">..</span><span class="hljs-subst">/</span>
+<span class="hljs-attribute">-rw</span><span class="hljs-attribute">-r</span><span class="hljs-subst">--</span>r<span class="hljs-subst">--</span>  <span class="hljs-number">1</span> hu   hu       <span class="hljs-number">0</span>  <span class="hljs-number">2</span>月 <span class="hljs-number">13</span> <span class="hljs-number">21</span>:<span class="hljs-number">10</span> a2
+</code></pre>
+<h3 id="pnuke-并行在远程主机杀进程">pnuke 并行在远程主机杀进程</h3>
+<pre class="prettyprint"><code class=" hljs ruby">hu<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>pnuke -h lvs.txt nginx
+[<span class="hljs-number">1</span>] <span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">12</span><span class="hljs-symbol">:</span><span class="hljs-number">22</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">51</span>
+[<span class="hljs-number">2</span>] <span class="hljs-number">21</span><span class="hljs-symbol">:</span><span class="hljs-number">12</span><span class="hljs-symbol">:</span><span class="hljs-number">22</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">53</span>
+</code></pre>
+<blockquote>
+<p>杀死目标服务器的nginx进程,只要ps进程中出现相关词语</p>
+</blockquote></div>
+
+</div>

@@ -1,0 +1,86 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="安装">安装</h1>
+<pre class="prettyprint"><code class=" hljs livecodeserver">sudo apt-<span class="hljs-built_in">get</span> install haproxy
+
+<span class="hljs-comment">#版本建议 &gt; 1.4.24</span>
+hu@ubuntu:~$ haproxy -vv
+HA-Proxy <span class="hljs-built_in">version</span> <span class="hljs-number">1.4</span><span class="hljs-number">.24</span> <span class="hljs-number">2013</span>/<span class="hljs-number">06</span>/<span class="hljs-number">17</span>
+Copyright <span class="hljs-number">2000</span>-<span class="hljs-number">2013</span> Willy Tarreau &lt;w@<span class="hljs-number">1</span>wt.eu&gt;
+
+Build options :
+  TARGET  = linux2628
+  CPU     = generic
+  CC      = gcc
+  CFLAGS  = -g -O2 -fstack-protector <span class="hljs-comment">--param=ssp-buffer-size=4 -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2</span>
+  OPTIONS = USE_PCRE=<span class="hljs-number">1</span>
+
+Default settings :
+  maxconn = <span class="hljs-number">2000</span>, bufsize = <span class="hljs-number">16384</span>, maxrewrite = <span class="hljs-number">8192</span>, maxpollevents = <span class="hljs-number">200</span>
+
+Encrypted password support via crypt(<span class="hljs-number">3</span>): yes
+
+Available polling systems :
+     sepoll : pref=<span class="hljs-number">400</span>,  test <span class="hljs-built_in">result</span> OK
+      epoll : pref=<span class="hljs-number">300</span>,  test <span class="hljs-built_in">result</span> OK
+       poll : pref=<span class="hljs-number">200</span>,  test <span class="hljs-built_in">result</span> OK
+     select : pref=<span class="hljs-number">150</span>,  test <span class="hljs-built_in">result</span> OK
+Total: <span class="hljs-number">4</span> (<span class="hljs-number">4</span> usable), will use sepoll.</code></pre>
+<h1 id="配置文件">配置文件</h1>
+<p>配置文件：<code>/etc/haproxy/haproxy.conf</code></p>
+<pre class="prettyprint"><code class=" hljs livecodeserver"><span class="hljs-built_in">global</span><span class="hljs-comment">#全局配置段</span>
+        <span class="hljs-built_in">log</span> <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span> local0 info
+        chroot /var/lib/haproxy   <span class="hljs-comment">#改变当前工作目录</span>
+        user haproxy         <span class="hljs-comment">#所属用户</span>
+        group haproxy        <span class="hljs-comment">#所属组</span>
+        daemon                <span class="hljs-comment">#以守护进程方式运行haproxy</span>
+
+<span class="hljs-comment">#------------------------------------------------------------</span>
+defaults
+        <span class="hljs-built_in">log</span> <span class="hljs-built_in">global</span>
+        mode    <span class="hljs-keyword">http</span>    <span class="hljs-comment">#默认的模式mode { tcp|http|health }</span>
+        option  httplog  <span class="hljs-comment">#启用记录HTTP请求、会话状态和计时器的功能</span>
+        option  dontlognull <span class="hljs-comment">#保证HAProxy不记录上级负载均衡发送过来的用于检测状态没有数据的心跳包。</span>
+        contimeout <span class="hljs-number">5000</span>      <span class="hljs-comment">#客户端超时时间，</span>
+        clitimeout <span class="hljs-number">50000</span>  <span class="hljs-comment">#设置连接客户端发送数据时的成功连接最长等待时间</span>
+        srvtimeout <span class="hljs-number">50000</span> <span class="hljs-comment">#设置服务器端回应客户度数据发送的最长等待时间</span>
+        errorfile <span class="hljs-number">400</span> /etc/haproxy/errors/<span class="hljs-number">400.</span><span class="hljs-keyword">http</span>
+        errorfile <span class="hljs-number">403</span> /etc/haproxy/errors/<span class="hljs-number">403.</span><span class="hljs-keyword">http</span>
+        errorfile <span class="hljs-number">408</span> /etc/haproxy/errors/<span class="hljs-number">408.</span><span class="hljs-keyword">http</span>
+        errorfile <span class="hljs-number">500</span> /etc/haproxy/errors/<span class="hljs-number">500.</span><span class="hljs-keyword">http</span>
+        errorfile <span class="hljs-number">502</span> /etc/haproxy/errors/<span class="hljs-number">502.</span><span class="hljs-keyword">http</span>
+        errorfile <span class="hljs-number">503</span> /etc/haproxy/errors/<span class="hljs-number">503.</span><span class="hljs-keyword">http</span>
+        errorfile <span class="hljs-number">504</span> /etc/haproxy/errors/<span class="hljs-number">504.</span><span class="hljs-keyword">http</span>
+
+<span class="hljs-comment">#------------------------------------------------------------</span>
+listen admin_stats  <span class="hljs-comment">#统计页面配置</span>
+        bind <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>:<span class="hljs-number">8888</span>
+        option httplog
+        stats refresh <span class="hljs-number">20</span>s
+        stats uri /stats <span class="hljs-comment">#统计页面url  http://0.0.0.0:8888/stats </span>
+        stats realm Haproxy Manager
+        stats auth admin:admin   <span class="hljs-comment">#统计页面用户名和密码设置</span>
+<span class="hljs-comment">#------------------------------------------------------------</span>
+<span class="hljs-comment">#代理配置：</span>
+<span class="hljs-comment">#        default： 默认配置-----&gt;所有在backend、frontend、linsten中相同内容可以在此定义；</span>
+<span class="hljs-comment">#        frontend：前段配置-----&gt;定义前端套接字，接受客户端请求；</span>
+<span class="hljs-comment">#        backend： 后端配置-----&gt;定义后端分配规则，与后端服务器交互；</span>
+<span class="hljs-comment">#        listen：  绑定配置-----&gt;直接将指定的客户端与后端特定服务器绑定到一起；</span>
+listen test2 :<span class="hljs-number">8222</span> <span class="hljs-comment">#定义一个绑定配置</span>
+       <span class="hljs-comment">#option httpclose  </span>
+       option forwardfor  <span class="hljs-comment">#启用X-Forwarded-For，在requests头部插入客户端IP发送给后端的server，使后端server获取到客户端的真实IP</span>
+        server <span class="hljs-number">54</span> <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.54</span>:<span class="hljs-number">80</span> check weight <span class="hljs-number">1</span> minconn <span class="hljs-number">1</span> maxconn <span class="hljs-number">3</span> check inter <span class="hljs-number">40000</span>        <span class="hljs-comment">#s1:为后端服务器所设置的内部名称,  10.10.100.54:80 后端服务器的IP地址, weight:分发的权&gt;</span>
+重 check:接受健康监测、inter:监测的间隔时长
+        server <span class="hljs-number">53</span> <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.53</span>:<span class="hljs-number">80</span> check weight <span class="hljs-number">1</span> minconn <span class="hljs-number">1</span> maxconn <span class="hljs-number">3</span> check inter <span class="hljs-number">40000</span> 
+<span class="hljs-comment">#------------------------------------------------------------ </span>
+frontend  server1
+        mode <span class="hljs-keyword">http</span>
+        bind <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>:<span class="hljs-number">8333</span>
+        default_backend real_server3
+backend real_server3
+        mode <span class="hljs-keyword">http</span>
+        balance roundrobin <span class="hljs-comment">#负载均衡算法（#banlance roundrobin 轮询，balance source 保存session值，支持static-rr，leastconn，first，uri等参数）</span>
+       server A <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.53</span>:<span class="hljs-number">80</span> weight <span class="hljs-number">1</span>  check inter <span class="hljs-number">1000</span>
+       server B <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.54</span>:<span class="hljs-number">80</span> weight <span class="hljs-number">1</span> check inter <span class="hljs-number">1000</span>
+</code></pre></div>
+
+</div>

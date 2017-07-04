@@ -1,0 +1,123 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><pre class="prettyprint"><code class=" hljs vala"><span class="hljs-preprocessor">#设置值</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; <span class="hljs-keyword">set</span> a1 <span class="hljs-number">1</span>
+OK
+<span class="hljs-preprocessor">#键对应的值</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; <span class="hljs-keyword">get</span> a1
+<span class="hljs-string">"1"</span>
+<span class="hljs-preprocessor">#删除键对应的值</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt;<span class="hljs-constant"> DEL </span>a1
+(integer) <span class="hljs-number">1</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; <span class="hljs-keyword">get</span> a1
+(nil)
+</code></pre>
+<pre class="prettyprint"><code class=" hljs livecodeserver"><span class="hljs-comment">#哈希</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; HMSET h1 f1 v1 f2 v2 <span class="hljs-comment">#同时将多个field - value(域-值)对设置到哈希表key中</span>
+OK
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; HGETALL h1
+<span class="hljs-number">1</span>) <span class="hljs-string">"f1"</span>
+<span class="hljs-number">2</span>) <span class="hljs-string">"v1"</span>
+<span class="hljs-number">3</span>) <span class="hljs-string">"f2"</span>
+<span class="hljs-number">4</span>) <span class="hljs-string">"v2"</span>
+
+
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; HSET h1 f3 <span class="hljs-number">3</span> <span class="hljs-comment">#将多一个field - value(域-值)对设置到哈希表key中</span>
+(<span class="hljs-keyword">integer</span>) <span class="hljs-number">1</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; HGETALL h1
+<span class="hljs-number">1</span>) <span class="hljs-string">"f1"</span>
+<span class="hljs-number">2</span>) <span class="hljs-string">"v1"</span>
+<span class="hljs-number">3</span>) <span class="hljs-string">"f2"</span>
+<span class="hljs-number">4</span>) <span class="hljs-string">"v2"</span>
+<span class="hljs-number">5</span>) <span class="hljs-string">"f3"</span>
+<span class="hljs-number">6</span>) <span class="hljs-string">"3"</span>
+
+<span class="hljs-comment">#增加 1</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; HINCRBY  h1 f3 <span class="hljs-number">1</span> <span class="hljs-comment">#value 必须为数字</span>
+(<span class="hljs-keyword">integer</span>) <span class="hljs-number">4</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; HGETALL h1
+<span class="hljs-number">1</span>) <span class="hljs-string">"f1"</span>
+<span class="hljs-number">2</span>) <span class="hljs-string">"v1"</span>
+<span class="hljs-number">3</span>) <span class="hljs-string">"f2"</span>
+<span class="hljs-number">4</span>) <span class="hljs-string">"v2"</span>
+<span class="hljs-number">5</span>) <span class="hljs-string">"f3"</span>
+<span class="hljs-number">6</span>) <span class="hljs-string">"4"</span>
+<span class="hljs-comment">#减少1</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; HINCRBY  h1 f3 -<span class="hljs-number">1</span>
+(<span class="hljs-keyword">integer</span>) <span class="hljs-number">3</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; HGETALL h1
+<span class="hljs-number">1</span>) <span class="hljs-string">"f1"</span>
+<span class="hljs-number">2</span>) <span class="hljs-string">"v1"</span>
+<span class="hljs-number">3</span>) <span class="hljs-string">"f2"</span>
+<span class="hljs-number">4</span>) <span class="hljs-string">"v2"</span>
+<span class="hljs-number">5</span>) <span class="hljs-string">"f3"</span>
+<span class="hljs-number">6</span>) <span class="hljs-string">"3"</span>
+</code></pre>
+<pre class="prettyprint"><code class=" hljs vala"><span class="hljs-preprocessor">#列表</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt;<span class="hljs-constant"> LPUSH </span>a3 test1 #列表左边添加
+(integer) <span class="hljs-number">1</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt;<span class="hljs-constant"> LPUSH </span>a3 test2
+(integer) <span class="hljs-number">2</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt;<span class="hljs-constant"> RPUSH </span>a3 test3 #列表右边添加
+(integer) <span class="hljs-number">3</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt;<span class="hljs-constant"> LRANGE </span>a3 <span class="hljs-number">0</span> -<span class="hljs-number">1</span>
+<span class="hljs-number">1</span>) <span class="hljs-string">"test2"</span>
+<span class="hljs-number">2</span>) <span class="hljs-string">"test1"</span>
+<span class="hljs-number">3</span>) <span class="hljs-string">"test3"</span>
+<span class="hljs-preprocessor">#分页，每页3条记录</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt;<span class="hljs-constant"> LRANGE </span>a3 <span class="hljs-number">0</span> -<span class="hljs-number">1</span>
+<span class="hljs-number">1</span>) <span class="hljs-string">"test2"</span>
+<span class="hljs-number">2</span>) <span class="hljs-string">"test1"</span>
+<span class="hljs-number">3</span>) <span class="hljs-string">"test3"</span>
+<span class="hljs-number">4</span>) <span class="hljs-string">"test4"</span>
+<span class="hljs-number">5</span>) <span class="hljs-string">"test5"</span>
+<span class="hljs-number">6</span>) <span class="hljs-string">"test6"</span>
+<span class="hljs-number">7</span>) <span class="hljs-string">"test7"</span>
+<span class="hljs-number">8</span>) <span class="hljs-string">"test8"</span>
+<span class="hljs-number">9</span>) <span class="hljs-string">"test9"</span>
+<span class="hljs-preprocessor">#第一页：LRANGE a3 0 2</span>
+<span class="hljs-preprocessor">#第二页：LRANGE a3 3 5</span>
+
+<span class="hljs-preprocessor">#排序 ALPHA安字母排序</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt;<span class="hljs-constant"> SORT </span>a3<span class="hljs-constant"> ALPHA </span>
+<span class="hljs-number">1</span>) <span class="hljs-string">"test1"</span>
+<span class="hljs-number">2</span>) <span class="hljs-string">"test2"</span>
+<span class="hljs-number">3</span>) <span class="hljs-string">"test3"</span>
+<span class="hljs-number">4</span>) <span class="hljs-string">"test4"</span>
+<span class="hljs-number">5</span>) <span class="hljs-string">"test5"</span>
+<span class="hljs-number">6</span>) <span class="hljs-string">"test6"</span>
+<span class="hljs-number">7</span>) <span class="hljs-string">"test7"</span>
+<span class="hljs-number">8</span>) <span class="hljs-string">"test8"</span>
+<span class="hljs-number">9</span>) <span class="hljs-string">"test9"</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt;<span class="hljs-constant"> SORT </span>a3 desc <span class="hljs-constant"> ALPHA </span>
+<span class="hljs-number">1</span>) <span class="hljs-string">"test9"</span>
+<span class="hljs-number">2</span>) <span class="hljs-string">"test8"</span>
+<span class="hljs-number">3</span>) <span class="hljs-string">"test7"</span>
+<span class="hljs-number">4</span>) <span class="hljs-string">"test6"</span>
+<span class="hljs-number">5</span>) <span class="hljs-string">"test5"</span>
+<span class="hljs-number">6</span>) <span class="hljs-string">"test4"</span>
+<span class="hljs-number">7</span>) <span class="hljs-string">"test3"</span>
+<span class="hljs-number">8</span>) <span class="hljs-string">"test2"</span>
+<span class="hljs-number">9</span>) <span class="hljs-string">"test1"</span>
+<span class="hljs-preprocessor">#带分页排序</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt;<span class="hljs-constant"> SORT </span>a3 desc <span class="hljs-constant"> ALPHA </span>limit <span class="hljs-number">0</span> <span class="hljs-number">3</span>
+<span class="hljs-number">1</span>) <span class="hljs-string">"test9"</span>
+<span class="hljs-number">2</span>) <span class="hljs-string">"test8"</span>
+<span class="hljs-number">3</span>) <span class="hljs-string">"test7"</span>
+</code></pre>
+<pre class="prettyprint"><code class=" hljs livecodeserver"><span class="hljs-comment">#有序集合</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; ZADD a4 <span class="hljs-number">1</span> test1
+(<span class="hljs-keyword">integer</span>) <span class="hljs-number">1</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; ZADD a4 <span class="hljs-number">2</span> test2
+(<span class="hljs-keyword">integer</span>) <span class="hljs-number">1</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; ZADD a4 <span class="hljs-number">3</span> test3
+(<span class="hljs-keyword">integer</span>) <span class="hljs-number">1</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; ZADD a4 <span class="hljs-number">4</span> test4
+(<span class="hljs-keyword">integer</span>) <span class="hljs-number">1</span>
+<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>:<span class="hljs-number">6379</span>&gt; ZRANGE a4 <span class="hljs-number">0</span> -<span class="hljs-number">1</span>
+<span class="hljs-number">1</span>) <span class="hljs-string">"test1"</span>
+<span class="hljs-number">2</span>) <span class="hljs-string">"test2"</span>
+<span class="hljs-number">3</span>) <span class="hljs-string">"test3"</span>
+<span class="hljs-number">4</span>) <span class="hljs-string">"test4"</span>
+</code></pre></div>
+
+</div>

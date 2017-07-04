@@ -1,0 +1,35 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="环境">环境</h1>
+<pre class="prettyprint"><code class=" hljs ">Ubuntu 14.04.2 LTS </code></pre>
+<h1 id="安装">安装</h1>
+<pre class="prettyprint"><code class=" hljs cs">apt-<span class="hljs-keyword">get</span> install docker.io </code></pre>
+<h1 id="下载image">下载image</h1>
+<pre class="prettyprint"><code class=" hljs bash">docker pull ubuntu
+<span class="hljs-comment">#查看image</span>
+docker images <span class="hljs-operator">-a</span></code></pre>
+<h1 id="运行">运行</h1>
+<pre class="prettyprint"><code class=" hljs lasso"><span class="hljs-variable">#container</span>启动时执行shell,执行完后container会退出（docker ps <span class="hljs-attribute">-l</span>可查看）
+docker run <span class="hljs-attribute">-i</span> <span class="hljs-attribute">-t</span> ubuntu ls</code></pre>
+<h2 id="安装ssh">安装SSH</h2>
+<pre class="prettyprint"><code class=" hljs asciidoc">docker run --hostname=ssh --name=ssh -i -t ubuntu /bin/bash  
+<span class="hljs-horizontal_rule">'''</span>
+修改root密码,安装ssh 开启 root登陆....  </code></pre>
+<p>–hostname container里面的hostname  <br>
+–name docker ps -l的name <br>
+<strong>对于执行容器内的交互式操作，例如shell脚本。我们必须使用 -i -t来申请一个控制台同容器进行数据交互</strong></br></br></p>
+<p><strong>container退出（Ctrl+C）后就停止了,以后再启动，这些更改就消失了 ctrl-p ctrl-q可以退出到宿主机，而保持container仍然在运行</strong></p>
+<pre class="prettyprint"><code class=" hljs bash">docker ps <span class="hljs-operator">-a</span><span class="hljs-comment">#查看CONTAINER ID </span>
+
+docker start c5a5ee0306b5 <span class="hljs-comment">#启动CONTAINER </span></code></pre>
+<p><em>在次启动CONTAINER ，CONTAINER 的IP有可能会改变，可以使用<code>docker inspect c5a5ee0306b5</code>查看IP 或者<code>docker exec c5a5ee0306b5 ifconfig</code></em></p>
+<h2 id="保存container">保存container</h2>
+<p>通过docker ps -a可以看见CONTAINER ID</p>
+<pre class="prettyprint"><code class=" hljs bash">docker commit c5a5ee0306b5 ubuntu:ssh
+
+docker images<span class="hljs-comment">#查看刚才提交的CONTAINER </span></code></pre>
+<h2 id="后台运行一个container">后台运行一个container</h2>
+<pre class="prettyprint"><code class=" hljs lasso">docker run <span class="hljs-attribute">-d</span> ubuntu:ssh /usr/sbin/sshd <span class="hljs-attribute">-D</span></code></pre>
+<h1 id="使用阿里的源">使用阿里的源</h1>
+<pre class="prettyprint"><code class=" hljs avrasm">docker pull registry<span class="hljs-preprocessor">.aliyuncs</span><span class="hljs-preprocessor">.com</span>/acs-sample/ubuntu</code></pre></div>
+
+</div>

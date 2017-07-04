@@ -1,0 +1,267 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="环境">环境：</h1>
+<p>虚拟机系统：Ubuntu 12.04</p>
+<table>
+<thead>
+<tr>
+<th>hostname</th>
+<th>ip</th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>LVSMaster</td>
+<td>eth0:192.168.31.198<br>eth1:10.10.100.100</br></td>
+<td></td>
+</tr>
+<tr>
+<td>LVSBackup</td>
+<td>eth0:192.168.31.197 <br> eth1:10.10.100.101</br></td>
+<td>LVS 备机</td>
+</tr>
+<tr>
+<td>RealserverNet1</td>
+<td>eth0:10.10.100.53</td>
+<td>真实机器 lvs net模式</td>
+</tr>
+<tr>
+<td>RealserverNet2</td>
+<td>eth0:10.10.100.54</td>
+<td>真实机器 lvs net模式</td>
+</tr>
+<tr>
+<td>RealserverDR1</td>
+<td>eth0:192.168.31.186</td>
+<td>真实机器 lvs dr模式</td>
+</tr>
+</tbody></table>
+<p><strong>DR模式需要的VIP： 192.168.31.200</strong> <br>
+<strong>NET模式需要的VIP： 10.10.100.200</strong></br></p>
+<h1 id="真实服务器配置">真实服务器配置</h1>
+<p>参照<a href="http://blog.csdn.net/u010066807/article/details/50659714">lvs 笔记</a></p>
+<h1 id="安装">安装</h1>
+<p>LVSMaster和LVSBackup安装keepalived和lvs</p>
+<pre class="prettyprint"><code class=" hljs cs">apt-<span class="hljs-keyword">get</span> install keepalived
+apt-<span class="hljs-keyword">get</span> install ipvsadm</code></pre>
+<h1 id="lvs配置">lvs配置</h1>
+<h2 id="lvsmaster配置文件">LVSMaster配置文件</h2>
+<pre class="prettyprint"><code class=" hljs bash">vim /etc/keepalived/keepalived.conf
+
+! Configuration File <span class="hljs-keyword">for</span> keepalived
+
+global_defs {
+   router_id LVSMaster
+}
+
+vrrp_instance VI_1 {
+    state MASTER
+    interface eth0 <span class="hljs-comment"># 对外服务的网卡</span>
+    virtual_router_id <span class="hljs-number">100</span> <span class="hljs-comment">#VRRP组名，两个节点的设置必须一样，以指明各个节点属于同一VRRP组</span>
+    priority <span class="hljs-number">100</span> <span class="hljs-comment">#主节点的优先级（1-254之间），备用节点必须比主节点优先级低</span>
+    advert_int <span class="hljs-number">1</span> <span class="hljs-comment">#设置主备之间同步检查的时间间隔单位秒 </span>
+    authentication { <span class="hljs-comment">#设置验证信息，两个节点必须一致</span>
+        auth_<span class="hljs-built_in">type</span> PASS
+        auth_pass <span class="hljs-number">123456</span>   
+    } 
+    virtual_ipaddress { <span class="hljs-comment">#指定虚拟IP, 两个节点设置必须一样</span>
+        <span class="hljs-number">192.168</span>.<span class="hljs-number">31.200</span>
+    }
+}
+
+<span class="hljs-comment">#lvs NAT配置</span>
+virtual_server <span class="hljs-number">192.168</span>.<span class="hljs-number">31.200</span> <span class="hljs-number">80</span> {
+    delay_loop <span class="hljs-number">6</span>
+    lb_algo wrr <span class="hljs-comment">#设置负载高度算法，wrr带权循环</span>
+    lb_kind NAT <span class="hljs-comment">#设置LVS实现负载均衡的机制，可以为{NAT|TUN|DR}三种</span>
+    <span class="hljs-comment">#persistence_timeout 50 #会话保持时间，单位为秒。动态网页session共享简单的决解办法。测试的时候注掉，不然看不出效果</span>
+    protocol TCP  <span class="hljs-comment">#指定转发协议类型可以设置{TCP|UDP}两种</span>
+
+    real_server <span class="hljs-number">10.10</span>.<span class="hljs-number">100.53</span> <span class="hljs-number">80</span> { <span class="hljs-comment">#真实的主机</span>
+        weight <span class="hljs-number">10</span> <span class="hljs-comment">#真实的主机的权重,数字越大，权重越高 </span>
+        TCP_CHECK { <span class="hljs-comment">#设置检测Realserver的方式</span>
+            connect_timeout <span class="hljs-number">3</span>
+            nb_get_retry <span class="hljs-number">3</span>
+            delay_before_retry <span class="hljs-number">3</span>
+            connect_port <span class="hljs-number">80</span>
+        }
+    }
+
+    real_server <span class="hljs-number">10.10</span>.<span class="hljs-number">100.54</span> <span class="hljs-number">80</span> {
+        weight <span class="hljs-number">10</span>
+        TCP_CHECK {
+            connect_timeout <span class="hljs-number">3</span>
+            nb_get_retry <span class="hljs-number">3</span>
+            delay_before_retry <span class="hljs-number">3</span>
+            connect_port <span class="hljs-number">80</span>
+        }
+    }
+
+}
+
+<span class="hljs-comment">#lvs DR配置</span>
+virtual_server <span class="hljs-number">192.168</span>.<span class="hljs-number">31.200</span> <span class="hljs-number">80</span> {
+    delay_loop <span class="hljs-number">6</span>
+    lb_algo wrr
+    lb_kind DR
+    persistence_timeout <span class="hljs-number">50</span>
+    protocol TCP
+
+    real_server <span class="hljs-number">192.168</span>.<span class="hljs-number">31.186</span> <span class="hljs-number">80</span> {
+        weight <span class="hljs-number">1</span>
+        TCP_CHECK {
+            connect_timeout <span class="hljs-number">3</span>
+            nb_get_retry <span class="hljs-number">3</span>
+            delay_before_retry <span class="hljs-number">3</span>
+            connect_port <span class="hljs-number">80</span>
+        }
+    }
+
+}</code></pre>
+<h2 id="lvsbackup配置文件">LVSBackup配置文件</h2>
+<pre class="prettyprint"><code class=" hljs ruby">scp /etc/keepalived/keepalived.conf <span class="hljs-number">10.10</span>.<span class="hljs-number">100.101</span><span class="hljs-symbol">:/etc/keepalived/keepalived</span>.conf
+vim /etc/keepalived/keepalived.conf</code></pre>
+<p>只用修改 <br>
+state BACKUP  <br>
+priority 90</br></br></p>
+<pre class="prettyprint"><code class=" hljs mathematica">! Configuration <span class="hljs-keyword">File</span> for keepalived
+
+global_defs <span class="hljs-list">{
+   router_id LVSMaster
+}</span>
+
+vrrp_instance VI_1 <span class="hljs-list">{
+    state BACKUP
+    interface eth0
+    virtual_router_id 100
+    priority 90
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 123456 
+    }</span> 
+    virtual_ipaddress <span class="hljs-list">{
+        192.168.31.200
+    }</span>
+}
+
+virtual_server <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.200</span> <span class="hljs-number">80</span> <span class="hljs-list">{
+    delay_loop 6
+    lb_algo wrr
+    lb_kind NAT
+    #persistence_timeout 50
+    protocol TCP
+
+    real_server 10.10.100.53 80 {
+        weight 10
+        TCP_CHECK {
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+            connect_port 80
+        }</span>
+    }
+
+    real_server <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.54</span> <span class="hljs-number">80</span> <span class="hljs-list">{
+        weight 10
+        TCP_CHECK {
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+            connect_port 80
+        }</span>
+    }
+
+}
+
+virtual_server <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.200</span> <span class="hljs-number">80</span> <span class="hljs-list">{
+    delay_loop 6
+    lb_algo wrr
+    lb_kind DR
+    persistence_timeout 50
+    protocol TCP
+
+    real_server 192.168.31.186 80 {
+        weight 1
+        TCP_CHECK {
+            connect_timeout 3
+            nb_get_retry 3
+            delay_before_retry 3
+            connect_port 80
+        }</span>
+    }
+}
+</code></pre>
+<h1 id="启动">启动</h1>
+<p>master 和backup 启动 keepalived</p>
+<pre class="prettyprint"><code class=" hljs sql">service keepalived <span class="hljs-operator"><span class="hljs-keyword">start</span></span></code></pre>
+<h1 id="测试">测试</h1>
+<pre class="prettyprint"><code class=" hljs livecodeserver">root@LVSMaster:~<span class="hljs-comment"># ip a</span>
+<span class="hljs-number">1</span>: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu <span class="hljs-number">65536</span> qdisc noqueue state UNKNOWN 
+    link/loopback <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> brd <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>
+    inet <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>/<span class="hljs-number">8</span> scope host lo
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+    inet6 ::<span class="hljs-number">1</span>/<span class="hljs-number">128</span> scope host 
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+<span class="hljs-number">2</span>: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu <span class="hljs-number">1500</span> qdisc pfifo_fast state UP qlen <span class="hljs-number">1000</span>
+    link/ether <span class="hljs-number">00</span>:<span class="hljs-number">0</span>c:<span class="hljs-number">29</span>:<span class="hljs-number">2</span>b:e9:<span class="hljs-number">71</span> brd ff:ff:ff:ff:ff:ff
+    inet <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.198</span>/<span class="hljs-number">24</span> brd <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.255</span> scope <span class="hljs-built_in">global</span> eth0
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+    inet <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.200</span>/<span class="hljs-number">32</span> scope <span class="hljs-built_in">global</span> eth0 <span class="hljs-comment">#现在序列IP在LVSMaster上</span>
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+    inet6 fe80::<span class="hljs-number">20</span>c:<span class="hljs-number">29</span>ff:fe2b:e971/<span class="hljs-number">64</span> scope link 
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+<span class="hljs-number">3</span>: eth1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu <span class="hljs-number">1500</span> qdisc pfifo_fast state UP qlen <span class="hljs-number">1000</span>
+    link/ether <span class="hljs-number">00</span>:<span class="hljs-number">0</span>c:<span class="hljs-number">29</span>:<span class="hljs-number">2</span>b:e9:<span class="hljs-number">7</span>b brd ff:ff:ff:ff:ff:ff
+    inet <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.100</span>/<span class="hljs-number">24</span> brd <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.255</span> scope <span class="hljs-built_in">global</span> eth1
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+    inet6 fe80::<span class="hljs-number">20</span>c:<span class="hljs-number">29</span>ff:fe2b:e97b/<span class="hljs-number">64</span> scope link 
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+</code></pre>
+<p>访问 <a href="http://192.168.31.200/">http://192.168.31.200/</a> </p>
+<p><strong>模拟master出问题</strong></p>
+<pre class="prettyprint"><code class=" hljs livecodeserver">root@LVSMaster:~<span class="hljs-comment"># service keepalived stop</span>
+<span class="hljs-comment">#vip已经没了</span>
+root@LVSMaster:~<span class="hljs-comment"># ip a</span>
+<span class="hljs-number">1</span>: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu <span class="hljs-number">65536</span> qdisc noqueue state UNKNOWN 
+    link/loopback <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> brd <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>
+    inet <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>/<span class="hljs-number">8</span> scope host lo
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+    inet6 ::<span class="hljs-number">1</span>/<span class="hljs-number">128</span> scope host 
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+<span class="hljs-number">2</span>: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu <span class="hljs-number">1500</span> qdisc pfifo_fast state UP qlen <span class="hljs-number">1000</span>
+    link/ether <span class="hljs-number">00</span>:<span class="hljs-number">0</span>c:<span class="hljs-number">29</span>:<span class="hljs-number">2</span>b:e9:<span class="hljs-number">71</span> brd ff:ff:ff:ff:ff:ff
+    inet <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.198</span>/<span class="hljs-number">24</span> brd <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.255</span> scope <span class="hljs-built_in">global</span> eth0
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+    inet6 fe80::<span class="hljs-number">20</span>c:<span class="hljs-number">29</span>ff:fe2b:e971/<span class="hljs-number">64</span> scope link 
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+<span class="hljs-number">3</span>: eth1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu <span class="hljs-number">1500</span> qdisc pfifo_fast state UP qlen <span class="hljs-number">1000</span>
+    link/ether <span class="hljs-number">00</span>:<span class="hljs-number">0</span>c:<span class="hljs-number">29</span>:<span class="hljs-number">2</span>b:e9:<span class="hljs-number">7</span>b brd ff:ff:ff:ff:ff:ff
+    inet <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.100</span>/<span class="hljs-number">24</span> brd <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.255</span> scope <span class="hljs-built_in">global</span> eth1
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+    inet6 fe80::<span class="hljs-number">20</span>c:<span class="hljs-number">29</span>ff:fe2b:e97b/<span class="hljs-number">64</span> scope link 
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+
+<span class="hljs-comment">#vip在LVSBackup上</span>
+root@LVSBackup:~<span class="hljs-comment"># ip a</span>
+<span class="hljs-number">1</span>: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu <span class="hljs-number">65536</span> qdisc noqueue state UNKNOWN 
+    link/loopback <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> brd <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>
+    inet <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>/<span class="hljs-number">8</span> scope host lo
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+    inet6 ::<span class="hljs-number">1</span>/<span class="hljs-number">128</span> scope host 
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+<span class="hljs-number">2</span>: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu <span class="hljs-number">1500</span> qdisc pfifo_fast state UP qlen <span class="hljs-number">1000</span>
+    link/ether <span class="hljs-number">00</span>:<span class="hljs-number">0</span>c:<span class="hljs-number">29</span>:<span class="hljs-number">7</span>f:<span class="hljs-number">11</span>:bd brd ff:ff:ff:ff:ff:ff
+    inet <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.197</span>/<span class="hljs-number">24</span> brd <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.255</span> scope <span class="hljs-built_in">global</span> eth0
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+    inet <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.200</span>/<span class="hljs-number">32</span> scope <span class="hljs-built_in">global</span> eth0
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+    inet6 fe80::<span class="hljs-number">20</span>c:<span class="hljs-number">29</span>ff:fe7f:<span class="hljs-number">11</span>bd/<span class="hljs-number">64</span> scope link 
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+<span class="hljs-number">3</span>: eth1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu <span class="hljs-number">1500</span> qdisc pfifo_fast state UP qlen <span class="hljs-number">1000</span>
+    link/ether <span class="hljs-number">00</span>:<span class="hljs-number">0</span>c:<span class="hljs-number">29</span>:<span class="hljs-number">7</span>f:<span class="hljs-number">11</span>:c7 brd ff:ff:ff:ff:ff:ff
+    inet <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.101</span>/<span class="hljs-number">24</span> brd <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.255</span> scope <span class="hljs-built_in">global</span> eth1
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span>
+    inet6 fe80::<span class="hljs-number">20</span>c:<span class="hljs-number">29</span>ff:fe7f:<span class="hljs-number">11</span>c7/<span class="hljs-number">64</span> scope link 
+       valid_lft <span class="hljs-keyword">forever</span> preferred_lft <span class="hljs-keyword">forever</span></code></pre></div>
+
+</div>

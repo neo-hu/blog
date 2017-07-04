@@ -1,0 +1,48 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="工厂方法">工厂方法</h1>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Class3</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self)</span>:</span>
+        self.id = <span class="hljs-number">0</span>
+
+    <span class="hljs-decorator">@staticmethod</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">instance</span><span class="hljs-params">(*args, **kwargs)</span>:</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> hasattr(Class3, <span class="hljs-string">"_instance"</span>):
+            Class3._instance = Class3(*args, **kwargs)
+        <span class="hljs-keyword">return</span> Class3._instance
+c1 = Class3.instance()
+c2 = Class3.instance()
+
+print(id(c1), c1.id)
+c1.id = <span class="hljs-number">1000</span>
+print(id(c2), c2.id)
+<span class="hljs-comment">#===============</span>
+
+(<span class="hljs-number">140619211572304</span>, <span class="hljs-number">0</span>)
+(<span class="hljs-number">140619211572304</span>, <span class="hljs-number">1000</span>)</code></pre>
+<h1 id="metaclass-元类"><strong>metaclass</strong>  元类</h1>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">singleton</span><span class="hljs-params">(type)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(cls, name, bases, dict)</span>:</span>
+        super(singleton, cls).__init__(name, bases, dict)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__call__</span><span class="hljs-params">(cls, *args, **kwargs)</span>:</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> hasattr(cls, <span class="hljs-string">"_instance"</span>):
+            cls._instance = super(singleton, cls).__call__(*args, **kwargs)
+        <span class="hljs-keyword">return</span> cls._instance
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Class4</span><span class="hljs-params">(object)</span>:</span>
+    __metaclass__ = singleton
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self)</span>:</span>
+        self.id = <span class="hljs-number">0</span>
+
+c1 = Class4()
+c2 = Class4()
+
+print(id(c1), c1.id)
+c1.id = <span class="hljs-number">1000</span>
+print(id(c2), c2.id)
+<span class="hljs-comment">#=============</span>
+(<span class="hljs-number">139687817574160</span>, <span class="hljs-number">0</span>)
+(<span class="hljs-number">139687817574160</span>, <span class="hljs-number">1000</span>)</code></pre></div>
+
+</div>

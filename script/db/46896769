@@ -1,0 +1,81 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<p>函数修饰器通常是用来给现存的函数增加每次函数被调用时都会运行的一层逻辑。它们可以用来记录函数的日志或者调用次数，检查参数的类型，用户权限等。</p>
+<p><br>
+</br></p>
+<p>如果我想记录每个函数执行的时间，</p>
+<p>1，可以在每个函数里面加逻辑，如果函数太多，代码改动太大</p>
+<pre class="python" name="code"># -*- coding:utf-8 -*-  
+import time
+
+def foo():
+    start= time.clock()
+    time.sleep(2.5)
+    end= time.clock()
+    print end - start</pre>
+<p>2，最大限度地少改动</p>
+<pre class="python" name="code"># -*- coding:utf-8 -*-  
+import time
+
+def timeit(func):
+    def wrapper():
+        start= time.clock()
+        func()
+        end= time.clock()
+        print end - start
+    return wrapper
+
+@timeit
+def foo():
+    time.sleep(2.5)</pre>
+<p>还有一个问题如果输出foo.__name__</p>
+<pre class="brush:python;toolbar:false">print foo.__name__</pre>
+<pre class="brush:bash;toolbar:false">wrapper</pre>
+<p><br>
+</br></p>
+<p><strong>带参数的修饰器</strong></p>
+<pre class="python" name="code"># -*- coding:utf-8 -*-  
+import time
+import functools
+
+def permission(level):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwds):
+            start= time.clock()
+            func(*args, **kwds)
+            end= time.clock()
+            print "level=%s"%level, func.__name__, end - start
+        return wrapper
+    return decorator
+
+@permission(level=2)
+def foo(l):
+    print l
+	
+foo(10)</pre>
+<p><br>
+</br></p>
+<p><br>
+</br></p>
+<p>可以使用functools模块</p>
+<pre class="python" name="code">def timeit(func):
+    @functools.wraps(func)
+    def wrapper():
+        start= time.clock()
+        func()
+        end= time.clock()
+        print end - start
+    return wrapper
+
+@timeit
+def foo():
+    time.sleep(0.5)
+foo()
+
+print foo.__name__</pre>
+<p><br>
+</br></p>
+<p>Python还提供其他的内置的装饰器比如staticmethod、classmethod和<a href="/blog/python/detail/property/" target="_blank">property</a></p>
+<p><br>
+</br></p>
+</div>

@@ -1,0 +1,152 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h3 id="环境">环境：</h3>
+<p>Ubuntu 12.04.5 LTS <br>
+mysql 5.5.47 <br>
+备份路径 /backup/</br></br></p>
+<h3 id="安装">安装</h3>
+<pre class="prettyprint"><code class=" hljs lasso"> apt<span class="hljs-attribute">-get</span> install percona<span class="hljs-attribute">-xtrabackup</span></code></pre>
+<h3 id="一-全量备份">一、 全量备份</h3>
+<pre class="prettyprint"><code class=" hljs sql">root@iZu1dc59z8tZ:/var/lib# innobackupex <span class="hljs-comment">--defaults-file=/etc/mysql/my.cnf --user=root --password=123123 /backup/           </span>
+
+InnoDB Backup Utility v1.5.1-xtrabackup; Copyright 2003, 2009 Innobase Oy
+and Percona LLC and/or its affiliates 2009-2013.  All Rights Reserved.
+
+This software is published under
+the GNU GENERAL PUBLIC LICENSE Version 2, June 1991.
+
+Get the latest version of Percona XtraBackup, documentation, and help resources:
+http://www.percona.com/xb/ubuntu
+
+160217 11:17:53  innobackupex: Connecting to MySQL server with DSN 'dbi:mysql:;mysql_read_default_file=/etc/mysql/my.cnf;mysql_read_default_group=xtrabackup' as 'root'  (using password: YES).
+160217 11:17:53  innobackupex: Connected to MySQL server
+160217 11:17:53  innobackupex: Executing a version check against the server...
+160217 11:17:53  innobackupex: Done.
+IMPORTANT: Please check that the backup run completes successfully.
+           At the <span class="hljs-operator"><span class="hljs-keyword">end</span> <span class="hljs-keyword">of</span> a successful backup run innobackupex
+           prints <span class="hljs-string">"completed OK!"</span>.
+
+innobackupex: <span class="hljs-keyword">Using</span> mysql server version <span class="hljs-number">5.5</span><span class="hljs-number">.47</span>-<span class="hljs-number">0</span>ubuntu0<span class="hljs-number">.14</span><span class="hljs-number">.04</span><span class="hljs-number">.1</span>
+
+innobackupex: Created backup directory /backup/<span class="hljs-number">2016</span>-<span class="hljs-number">02</span>-<span class="hljs-number">17</span>_11-<span class="hljs-number">17</span>-<span class="hljs-number">53</span>
+
+<span class="hljs-number">160217</span> <span class="hljs-number">11</span>:<span class="hljs-number">17</span>:<span class="hljs-number">53</span>  innobackupex: Starting ibbackup <span class="hljs-keyword">with</span> command: xtrabackup_55  --defaults-file=<span class="hljs-string">"/etc/mysql/my.cnf"</span>  --defaults-<span class="hljs-keyword">group</span>=<span class="hljs-string">"mysqld"</span> --backup --suspend-<span class="hljs-keyword">at</span>-<span class="hljs-keyword">end</span> --target-dir=/backup/<span class="hljs-number">2016</span>-<span class="hljs-number">02</span>-<span class="hljs-number">17</span>_11-<span class="hljs-number">17</span>-<span class="hljs-number">53</span> --tmpdir=/tmp
+innobackupex: Waiting <span class="hljs-keyword">for</span> ibbackup (pid=<span class="hljs-number">30486</span>) <span class="hljs-keyword">to</span> suspend
+innobackupex: Suspend file <span class="hljs-string">'/backup/2016-02-17_11-17-53/xtrabackup_suspended_2'</span>
+
+xtrabackup_55 version <span class="hljs-number">2.1</span><span class="hljs-number">.8</span> <span class="hljs-keyword">for</span> Percona Server <span class="hljs-number">5.5</span><span class="hljs-number">.35</span> Linux (x86_64) (revision id: undefined)
+xtrabackup: uses posix_fadvise().
+xtrabackup: cd <span class="hljs-keyword">to</span> /var/lib/mysql
+xtrabackup: <span class="hljs-keyword">using</span> the following InnoDB configuration:
+xtrabackup:   innodb_data_home_dir = ./
+xtrabackup:   innodb_data_file_path = ibdata1:<span class="hljs-number">10</span>M:autoextend
+xtrabackup:   innodb_log_group_home_dir = ./
+xtrabackup:   innodb_log_files_in_group = <span class="hljs-number">2</span>
+xtrabackup:   innodb_log_file_size = <span class="hljs-number">5242880</span>
+&gt;&gt; log scanned up <span class="hljs-keyword">to</span> (<span class="hljs-number">3233814</span>)
+[<span class="hljs-number">01</span>] Copying ./ibdata1 <span class="hljs-keyword">to</span> /backup/<span class="hljs-number">2016</span>-<span class="hljs-number">02</span>-<span class="hljs-number">17</span>_11-<span class="hljs-number">17</span>-<span class="hljs-number">53</span>/ibdata1
+[<span class="hljs-number">01</span>]        ...done
+&gt;&gt; log scanned up <span class="hljs-keyword">to</span> (<span class="hljs-number">3233814</span>)
+xtrabackup: Creating suspend file <span class="hljs-string">'/backup/2016-02-17_11-17-53/xtrabackup_suspended_2'</span> <span class="hljs-keyword">with</span> pid <span class="hljs-string">'30487'</span>
+
+<span class="hljs-number">160217</span> <span class="hljs-number">11</span>:<span class="hljs-number">17</span>:<span class="hljs-number">55</span>  innobackupex: Continuing <span class="hljs-keyword">after</span> ibbackup has suspended
+<span class="hljs-number">160217</span> <span class="hljs-number">11</span>:<span class="hljs-number">17</span>:<span class="hljs-number">55</span>  innobackupex: Starting <span class="hljs-keyword">to</span> <span class="hljs-keyword">lock</span> <span class="hljs-keyword">all</span> tables...
+<span class="hljs-number">160217</span> <span class="hljs-number">11</span>:<span class="hljs-number">17</span>:<span class="hljs-number">55</span>  innobackupex: <span class="hljs-keyword">All</span> tables locked <span class="hljs-keyword">and</span> flushed <span class="hljs-keyword">to</span> disk
+
+<span class="hljs-number">160217</span> <span class="hljs-number">11</span>:<span class="hljs-number">17</span>:<span class="hljs-number">55</span>  innobackupex: Starting <span class="hljs-keyword">to</span> backup non-InnoDB tables <span class="hljs-keyword">and</span> files
+innobackupex: <span class="hljs-keyword">in</span> subdirectories <span class="hljs-keyword">of</span> <span class="hljs-string">'/var/lib/mysql'</span>
+innobackupex: Backing up files <span class="hljs-string">'/var/lib/mysql/phpmyadmin/*.{frm,isl,MYD,MYI,MAD,MAI,MRG,TRG,TRN,ARM,ARZ,CSM,CSV,opt,par}'</span> (<span class="hljs-number">37</span> files)
+&gt;&gt; log scanned up <span class="hljs-keyword">to</span> (<span class="hljs-number">3233814</span>)
+innobackupex: Backing up files <span class="hljs-string">'/var/lib/mysql/mysql/*.{frm,isl,MYD,MYI,MAD,MAI,MRG,TRG,TRN,ARM,ARZ,CSM,CSV,opt,par}'</span> (<span class="hljs-number">72</span> files)
+innobackupex: Backing up files <span class="hljs-string">'/var/lib/mysql/performance_schema/*.{frm,isl,MYD,MYI,MAD,MAI,MRG,TRG,TRN,ARM,ARZ,CSM,CSV,opt,par}'</span> (<span class="hljs-number">18</span> files)
+innobackupex: Backing up files <span class="hljs-string">'/var/lib/mysql/blog/*.{frm,isl,MYD,MYI,MAD,MAI,MRG,TRG,TRN,ARM,ARZ,CSM,CSV,opt,par}'</span> (<span class="hljs-number">29</span> files)
+<span class="hljs-number">160217</span> <span class="hljs-number">11</span>:<span class="hljs-number">17</span>:<span class="hljs-number">56</span>  innobackupex: Finished backing up non-InnoDB tables <span class="hljs-keyword">and</span> files
+
+<span class="hljs-number">160217</span> <span class="hljs-number">11</span>:<span class="hljs-number">17</span>:<span class="hljs-number">56</span>  innobackupex: Waiting <span class="hljs-keyword">for</span> log copying <span class="hljs-keyword">to</span> finish
+
+xtrabackup: The latest <span class="hljs-keyword">check</span> point (<span class="hljs-keyword">for</span> incremental): <span class="hljs-string">'3233814'</span>
+xtrabackup: Stopping log copying thread.
+.&gt;&gt; log scanned up <span class="hljs-keyword">to</span> (<span class="hljs-number">3233814</span>)
+
+xtrabackup: Creating suspend file <span class="hljs-string">'/backup/2016-02-17_11-17-53/xtrabackup_log_copied'</span> <span class="hljs-keyword">with</span> pid <span class="hljs-string">'30487'</span>
+xtrabackup: <span class="hljs-keyword">Transaction</span> log <span class="hljs-keyword">of</span> lsn (<span class="hljs-number">3233814</span>) <span class="hljs-keyword">to</span> (<span class="hljs-number">3233814</span>) was copied.
+<span class="hljs-number">160217</span> <span class="hljs-number">11</span>:<span class="hljs-number">17</span>:<span class="hljs-number">57</span>  innobackupex: <span class="hljs-keyword">All</span> tables unlocked
+
+innobackupex: Backup created <span class="hljs-keyword">in</span> directory <span class="hljs-string">'/backup/2016-02-17_11-17-53'</span>
+<span class="hljs-number">160217</span> <span class="hljs-number">11</span>:<span class="hljs-number">17</span>:<span class="hljs-number">57</span>  innobackupex: <span class="hljs-keyword">Connection</span> <span class="hljs-keyword">to</span> <span class="hljs-keyword">database</span> server closed
+<span class="hljs-number">160217</span> <span class="hljs-number">11</span>:<span class="hljs-number">17</span>:<span class="hljs-number">57</span>  innobackupex: completed OK!</span></code></pre>
+<p><strong>completed OK! 表示备份成功。</strong></p>
+<p>还有很多其他常用的参数。 <br>
+<strong>–stream=tar</strong>        压缩类型, 默认是输出到终端,如果保存为文件</br></p>
+<pre class="prettyprint"><code class=" hljs coffeescript">innobackupex --defaults-file=<span class="hljs-regexp">/etc/mysql/my.cnf --user=root --password=*** /backup/</span> --stream=tar &gt; <span class="hljs-regexp">/backup/</span>`<span class="javascript">date +<span class="hljs-string">"%Y%m%d_%H%M%S"</span></span>`.tar
+<span class="hljs-comment">#or gzip 压缩</span>
+innobackupex --defaults-file=<span class="hljs-regexp">/etc/mysql/my.cnf --user=root --password=*** /backup/</span> --stream=tar  | gzip &gt; <span class="hljs-regexp">/backup/</span>`<span class="javascript">date +<span class="hljs-string">"%Y%m%d_%H%M%S"</span></span>`.tar.gz</code></pre>
+<p><strong>–parallel=4 –throttle=400</strong>                      并行个数，根据主机配置选择合适的，默认是1个，多个可以加快备份速度。</p>
+<h3 id="二-全量恢复">二、 全量恢复</h3>
+<p><strong><em>恢复备份文件要保证MySQL datadir文件为空，否则会报错</em></strong></p>
+<h3 id="测试恢复">测试恢复</h3>
+<pre class="prettyprint"><code class=" hljs vbnet">service mysql <span class="hljs-keyword">stop</span> <span class="hljs-preprocessor">#停止MySQL</span>
+mv /var/<span class="hljs-keyword">lib</span>/mysql/ /var/<span class="hljs-keyword">lib</span>/mysql_bak <span class="hljs-preprocessor">#备份原mysql 的datadir</span>
+mkdir /var/<span class="hljs-keyword">lib</span>/mysql</code></pre>
+<h4 id="恢复第一步应用日志">恢复第一步：应用日志</h4>
+<p><strong>如果加了压缩，需要解压</strong></p>
+<pre class="prettyprint"><code class=" hljs avrasm">mkdir /backup/<span class="hljs-number">20160217</span>_114521
+tar -ixvf /backup/<span class="hljs-number">20160217</span>_114521<span class="hljs-preprocessor">.tar</span><span class="hljs-preprocessor">.gz</span> -C /backup/<span class="hljs-number">20160217</span>_114521</code></pre>
+<pre class="prettyprint"><code class=" hljs brainfuck"><span class="hljs-comment">innobackupex</span>  <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">defaults</span><span class="hljs-literal">-</span><span class="hljs-comment">file=/etc/mysql/my</span><span class="hljs-string">.</span><span class="hljs-comment">cnf</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">apply</span><span class="hljs-literal">-</span><span class="hljs-comment">log</span> <span class="hljs-comment">/backup/20160217_114521</span></code></pre>
+<h4 id="恢复第二步拷贝文件到mysql-datadir">恢复第二步：拷贝文件到MySQL datadir</h4>
+<pre class="prettyprint"><code class=" hljs brainfuck"><span class="hljs-comment">innobackupex</span>  <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">defaults</span><span class="hljs-literal">-</span><span class="hljs-comment">file=/etc/mysql/my</span><span class="hljs-string">.</span><span class="hljs-comment">cnf</span>  <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">copy</span><span class="hljs-literal">-</span><span class="hljs-comment">back</span> <span class="hljs-comment">/backup/20160217_114521</span></code></pre>
+<h4 id="恢复第三步修改文件权限启动mysql服务">恢复第三步：修改文件权限,启动mysql服务。</h4>
+<pre class="prettyprint"><code class=" hljs lasso">chown mysql: /<span class="hljs-built_in">var</span>/lib/mysql <span class="hljs-attribute">-R</span>
+service mysql start</code></pre>
+<h3 id="三-增量备份">三、 增量备份</h3>
+<p>增量备份需要基于全备，先假设我们已经有了一个全备（/backup/20160217_114521），在该全表的基础上做增量备份。 <br>
+第一次在数据库插入一条数据,在全备上做增量备份</br></p>
+<pre class="prettyprint"><code class=" hljs brainfuck"><span class="hljs-comment">innobackupex</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">defaults</span><span class="hljs-literal">-</span><span class="hljs-comment">file=/etc/mysql/my</span><span class="hljs-string">.</span><span class="hljs-comment">cnf</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">user=root</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">password=123123</span>   <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">incremental</span><span class="hljs-literal">-</span><span class="hljs-comment">basedir=/backup/20160217_114521</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">incremental</span> <span class="hljs-comment">/backup/</span></code></pre>
+<p>incremental-basedir=全备的目录 <br>
+–incremental=增量备份的目录</br></p>
+<p>第二次在数据库插入一条数据,在第一次增量备份上做增量备份</p>
+<pre class="prettyprint"><code class=" hljs brainfuck"><span class="hljs-comment">innobackupex</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">defaults</span><span class="hljs-literal">-</span><span class="hljs-comment">file=/etc/mysql/my</span><span class="hljs-string">.</span><span class="hljs-comment">cnf</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">user=root</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">password=123123</span>   <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">incremental</span><span class="hljs-literal">-</span><span class="hljs-comment">basedir=/backup/2016</span><span class="hljs-literal">-</span><span class="hljs-comment">02</span><span class="hljs-literal">-</span><span class="hljs-comment">17_12</span><span class="hljs-literal">-</span><span class="hljs-comment">15</span><span class="hljs-literal">-</span><span class="hljs-comment">30</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">incremental</span> <span class="hljs-comment">/backup/</span></code></pre>
+<pre class="prettyprint"><code class=" hljs ini"><span class="hljs-setting">incremental-basedir=<span class="hljs-value">在第一次增量备份的目录</span></span>
+<span class="hljs-setting">--incremental=<span class="hljs-value">增量备份的目录</span></span></code></pre>
+<p><strong>备份目录下，有一个文件xtrabackup_checkpoints记录着备份信息，全备的信息如下：</strong></p>
+<pre class="prettyprint"><code class=" hljs makefile">root@iZu1dc59z8tZ:/backup<span class="hljs-comment"># cat 20160217_114521/xtrabackup_checkpoints </span>
+<span class="hljs-constant">backup_type</span> = full-prepared
+<span class="hljs-constant">from_lsn</span> = 0
+<span class="hljs-constant">to_lsn</span> = 3233814
+<span class="hljs-constant">last_lsn</span> = 3233814
+<span class="hljs-constant">compact</span> = 0
+root@iZu1dc59z8tZ:/backup<span class="hljs-comment"># cat 2016-02-17_12-15-30/xtrabackup_checkpoints                </span>
+<span class="hljs-constant">backup_type</span> = incremental
+<span class="hljs-constant">from_lsn</span> = 3233814
+<span class="hljs-constant">to_lsn</span> = 3234430
+<span class="hljs-constant">last_lsn</span> = 3234430
+<span class="hljs-constant">compact</span> = 0
+root@iZu1dc59z8tZ:/backup<span class="hljs-comment"># cat 2016-02-17_12-1/xtrabackup_checkpoints     </span>
+2016-02-17_12-15-30/ 2016-02-17_12-17-31/ 
+root@iZu1dc59z8tZ:/backup<span class="hljs-comment"># cat 2016-02-17_12-17-31/xtrabackup_checkpoints </span>
+<span class="hljs-constant">backup_type</span> = incremental
+<span class="hljs-constant">from_lsn</span> = 3234430
+<span class="hljs-constant">to_lsn</span> = 3234537
+<span class="hljs-constant">last_lsn</span> = 3234537
+<span class="hljs-constant">compact</span> = 0</code></pre>
+<p><strong>从上面可以看出，增量备份的from_lsn正好等于全备的to_lsn。</strong></p>
+<h3 id="四-增量恢复">四、 增量恢复</h3>
+<pre class="prettyprint"><code class=" hljs cs"><span class="hljs-comment">//测试恢复</span>
+service mysql stop <span class="hljs-preprocessor">#停止MySQL</span>
+mv /<span class="hljs-keyword">var</span>/lib/mysql/ /<span class="hljs-keyword">var</span>/lib/mysql_bak <span class="hljs-preprocessor">#备份原mysql 的datadir</span>
+mkdir /<span class="hljs-keyword">var</span>/lib/mysql</code></pre>
+<h4 id="恢复第一步应用所有增量日志">恢复第一步：应用所有增量日志</h4>
+<h5 id="1应用全量的日志">1，应用全量的日志</h5>
+<pre class="prettyprint"><code class=" hljs brainfuck"><span class="hljs-comment">innobackupex</span>  <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">defaults</span><span class="hljs-literal">-</span><span class="hljs-comment">file=/etc/mysql/my</span><span class="hljs-string">.</span><span class="hljs-comment">cnf</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">apply</span><span class="hljs-literal">-</span><span class="hljs-comment">log</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">redo</span><span class="hljs-literal">-</span><span class="hljs-comment">only</span> <span class="hljs-comment">/backup/20160217_114521</span></code></pre>
+<h5 id="2应用增量的日志">2，应用增量的日志</h5>
+<pre class="prettyprint"><code class=" hljs lasso"><span class="hljs-comment">//第一次增量</span>
+innobackupex  <span class="hljs-subst">--</span>defaults<span class="hljs-attribute">-file</span><span class="hljs-subst">=</span>/etc/mysql/my<span class="hljs-built_in">.</span>cnf <span class="hljs-subst">--</span>apply<span class="hljs-attribute">-log</span> <span class="hljs-subst">--</span>redo<span class="hljs-attribute">-only</span> /backup/<span class="hljs-number">20160217</span>_114521 <span class="hljs-subst">--</span>incremental<span class="hljs-attribute">-dir</span><span class="hljs-subst">=</span>/backup/<span class="hljs-number">2016</span><span class="hljs-subst">-</span><span class="hljs-number">02</span><span class="hljs-subst">-</span><span class="hljs-number">17</span>_12<span class="hljs-subst">-</span><span class="hljs-number">15</span><span class="hljs-subst">-</span><span class="hljs-number">30</span><span class="hljs-subst">/</span> </code></pre>
+<p>……</p>
+<pre class="prettyprint"><code class=" hljs lasso"><span class="hljs-comment">//最后一次增量</span>
+innobackupex  <span class="hljs-subst">--</span>defaults<span class="hljs-attribute">-file</span><span class="hljs-subst">=</span>/etc/mysql/my<span class="hljs-built_in">.</span>cnf <span class="hljs-subst">--</span>apply<span class="hljs-attribute">-log</span>  /backup/<span class="hljs-number">20160217</span>_114521 <span class="hljs-subst">--</span>incremental<span class="hljs-attribute">-dir</span><span class="hljs-subst">=</span>/backup/<span class="hljs-number">2016</span><span class="hljs-subst">-</span><span class="hljs-number">02</span><span class="hljs-subst">-</span><span class="hljs-number">17</span>_12<span class="hljs-subst">-</span><span class="hljs-number">17</span><span class="hljs-subst">-</span><span class="hljs-number">31</span><span class="hljs-subst">/</span></code></pre>
+<h4 id="恢复第二步拷贝文件到mysql-datadir-1">恢复第二步：拷贝文件到MySQL datadir</h4>
+<pre class="prettyprint"><code class=" hljs brainfuck"><span class="hljs-comment">innobackupex</span>  <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">defaults</span><span class="hljs-literal">-</span><span class="hljs-comment">file=/etc/mysql/my</span><span class="hljs-string">.</span><span class="hljs-comment">cnf</span>  <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">copy</span><span class="hljs-literal">-</span><span class="hljs-comment">back</span> <span class="hljs-comment">/backup/20160217_114521</span></code></pre>
+<h4 id="恢复第三步修改文件权限启动mysql服务-1">恢复第三步：修改文件权限,启动mysql服务。</h4>
+<pre class="prettyprint"><code class=" hljs lasso">chown mysql: /<span class="hljs-built_in">var</span>/lib/mysql <span class="hljs-attribute">-R</span>
+service mysql start</code></pre></div>
+
+</div>

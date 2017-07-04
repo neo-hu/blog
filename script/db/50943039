@@ -1,0 +1,64 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="wsgi配置文件">wsgi配置文件</h1>
+<pre class="prettyprint"><code class=" hljs makefile">vim uwsgi.ini
+
+[uwsgi]
+<span class="hljs-constant">socket</span> = /tmp/t1.sock
+<span class="hljs-constant">pidfile</span> = /tmp/t1.pid
+<span class="hljs-constant">plugins</span> = python
+<span class="hljs-constant">pythonpath</span> = /var/www
+<span class="hljs-comment">#项目python环境</span>
+<span class="hljs-constant">virtualenv</span> = /var/www/env
+<span class="hljs-comment">#项目的跟路径</span>
+<span class="hljs-constant">pythonpath</span> = /var/www/my_flask
+
+<span class="hljs-constant">chdir</span> = /var/www/my_flask
+<span class="hljs-comment">#日志文件</span>
+<span class="hljs-constant">daemonize</span> = /var/www/my_flask/web.log
+chmod-socket = 666
+
+<span class="hljs-constant">master</span> = true
+<span class="hljs-comment">#启动的进程</span>
+<span class="hljs-constant">processes</span> = 4
+<span class="hljs-comment">#环境变量</span>
+<span class="hljs-constant">env</span>=PYTHON_EGG_CACHE=/tmp/t1
+<span class="hljs-constant">env</span>=LANG=zh_CN.UTF-8
+<span class="hljs-constant">env</span>=LC_ALL=zh_CN.UTF-8
+
+<span class="hljs-comment">#flask app的 py文件</span>
+<span class="hljs-constant">module</span> = index
+<span class="hljs-comment">#app的 py文件里面的app对象</span>
+<span class="hljs-constant">callable</span> = app
+max-requests = 500000
+<span class="hljs-comment">#运行的用户</span>
+<span class="hljs-constant">gid</span> = www-data
+<span class="hljs-constant">uid</span> = www-data
+ignore-sigpipe = true
+enable-threads = true</code></pre>
+<h2 id="测试的indexpy">测试的index.py</h2>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">from</span> flask <span class="hljs-keyword">import</span> Flask
+
+app = Flask(__name__)
+
+<span class="hljs-decorator">@app.route("/")</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">hello</span><span class="hljs-params">()</span>:</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-string">"Hello World!</span></code></pre>
+<h1 id="运行">运行</h1>
+<pre class="prettyprint"><code class=" hljs ruby"><span class="hljs-comment">#以www-data用户运行 uwsgi </span>
+sudo -u www-data uwsgi --ini uwsgi.ini 
+<span class="hljs-comment">#运行后会生成socket文件</span>
+
+root<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:/var/www/my_flask</span><span class="hljs-comment"># ll /tmp/t1*</span>
+-rw-r--r-- <span class="hljs-number">1</span> www-data www-data <span class="hljs-number">5</span> <span class="hljs-constant">Mar</span> <span class="hljs-number">21</span> <span class="hljs-number">10</span><span class="hljs-symbol">:</span><span class="hljs-number">13</span> /tmp/t1.pid
+srw-rw-rw- <span class="hljs-number">1</span> www-data www-data <span class="hljs-number">0</span> <span class="hljs-constant">Mar</span> <span class="hljs-number">21</span> <span class="hljs-number">10</span><span class="hljs-symbol">:</span><span class="hljs-number">13</span> /tmp/t1.sock=</code></pre>
+<h1 id="nginx配置">nginx配置</h1>
+<pre class="prettyprint"><code class=" hljs r">server {
+        <span class="hljs-keyword">...</span>
+        location / {
+                include uwsgi_params;
+                uwsgi_pass unix:///tmp/t1.sock; <span class="hljs-comment">#这为生成的sock文件</span>
+        }
+        <span class="hljs-keyword">...</span>
+}</code></pre></div>
+
+</div>
