@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-
+import {HashLocationStrategy, LocationStrategy} from '@angular/common';
 import {RoutingModule} from './routing/routing.module';
 import {CircleProgressComponent} from './circle-progress/circle-progress.component';
 // TODO PIPE
@@ -39,7 +39,7 @@ const DECLARATIONS:any[] = [
     HttpModule,
     RoutingModule
   ],
-  providers: [ThemesService],
+  providers: [ThemesService, {provide: LocationStrategy, useClass: HashLocationStrategy}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
