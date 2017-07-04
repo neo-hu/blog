@@ -1,0 +1,37 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="常用的iptables-tcp配置">常用的iptables tcp配置</h1>
+<p>注：已经开启iptables 并且 <code>iptables -P INPUT DROP</code></p>
+<p>开放所有端口给一个IP <br>
+<code>iptables -A INPUT -s 192.168.31.109 -i eth0 -p tcp   -j ACCEPT</code></br></p>
+<p>开放某个端口给一个IP <br>
+<code>iptables -A INPUT -s 192.168.31.109 -i eth0 -p tcp  --dport 21 -j ACCEPT</code></br></p>
+<p>iptables -A INPUT -m state –state ESTABLISHED,RELATED -j ACCEPT 这是担负起大部份工作的规则，而我们再一次将它加进（-A）INPUT 链内。这里我们利用 -m 选项来装入一个模块（state）。state 模块能够查看一个封包并判断它的状态是 NEW、ESTABLISHED 抑或 RELATED。NEW 指进入的封包属于不是由主机初始化的新增连接。ESTABLISHED 及 RELATED 指进入的封包隶属于一条现存的连接，或者与现存的连接有关系。</p>
+<p>开放端口段给一个IP <br>
+<code>iptables -A INPUT -s 192.168.31.109 -i eth0 -p tcp  --dport 30001:31000 -j ACCEPT</code></br></p>
+<p>IP段</p>
+<blockquote>
+<p>比如允许所有192.168.31段的IP <br>
+<code>iptables -A INPUT -s 192.168.31.109/24 -i eth0 -p tcp  --dport 30001:31000 -j ACCEPT</code></br></p>
+</blockquote>
+<hr>
+<blockquote>
+<p>比如允许192.168.31.109使用FTP服务 <br>
+<code>iptables -A INPUT -s 192.168.31.109 -i eth0 -p tcp  --dport 21 -j ACCEPT</code>#21认证端口 <br>
+  如果FTP是主动模式，必须开启20端口（FTP的数据传输端口） <br>
+<code>iptables -A INPUT -s 192.168.31.109 -i eth0 -p tcp  --dport 20 -j ACCEPT</code> <br>
+  如果FTP是被动模式，可以设置FTP的最大使用端口和最小使用端口</br></br></br></br></p>
+<pre class="prettyprint"><code class=" hljs makefile">vim /etc/vsftpd.conf
+
+<span class="hljs-comment">#在最后加入</span>
+
+<span class="hljs-constant">pasv_min_port</span>=30001
+<span class="hljs-constant">pasv_max_port</span>=31000
+</code></pre>
+<p><code>iptables -A INPUT -s 192.168.31.109 -i eth0 -p tcp  --dport 30001:31000 -j ACCEPT</code> <br>
+  如果FTP主动和被动都需要就20和30001：31000都允许 <br>
+<strong>如果设置了<code>iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT</code>   主动模式下不需要加入20端口就可以使用</strong></br></br></p>
+</blockquote>
+<p>允许 SSH 通过 tcp 端口 22 来连接。</p>
+<pre class="prettyprint"><code class=" hljs lasso">iptables <span class="hljs-attribute">-A</span> INPUT <span class="hljs-attribute">-p</span> tcp <span class="hljs-subst">--</span>dport <span class="hljs-number">22</span> <span class="hljs-attribute">-j</span> ACCEPT </code></pre></hr></div>
+
+</div>

@@ -1,0 +1,111 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="mythriftthrift">my_thrift.thrift</h1>
+<pre class="prettyprint"><code class=" hljs cmake">struct <span class="hljs-keyword">Message</span> {
+    <span class="hljs-number">1</span>: <span class="hljs-keyword">string</span> msg
+}
+
+service MessageService {
+    <span class="hljs-keyword">Message</span> getMessage(<span class="hljs-number">1</span>:<span class="hljs-keyword">Message</span> msg)
+}
+
+struct User {
+    <span class="hljs-number">1</span>: <span class="hljs-keyword">string</span> name
+}
+
+service UserService {
+    User getUser(<span class="hljs-number">1</span>:User user)
+}</code></pre>
+<pre class="prettyprint"><code class=" hljs avrasm">thrift --gen py test<span class="hljs-preprocessor">.thrift</span>
+
+├── gen-py
+│   ├── __init__<span class="hljs-preprocessor">.py</span>
+│   └── my_thrift
+│       ├── constants<span class="hljs-preprocessor">.py</span>
+│       ├── __init__<span class="hljs-preprocessor">.py</span>
+│       ├── MessageService<span class="hljs-preprocessor">.py</span>
+│       ├── MessageService-remote
+│       ├── ttypes<span class="hljs-preprocessor">.py</span>
+│       ├── UserService<span class="hljs-preprocessor">.py</span>
+│       └── UserService-remote
+├── __init__<span class="hljs-preprocessor">.py</span>
+├── my_thrift<span class="hljs-preprocessor">.thrift</span>
+</code></pre>
+<h1 id="服务端">服务端</h1>
+<p>server.py</p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment">#!/usr/bin/env python</span>
+<span class="hljs-comment"># # -*- coding: utf-8 -*-</span>
+
+<span class="hljs-keyword">import</span> sys
+<span class="hljs-keyword">from</span> thrift.TMultiplexedProcessor <span class="hljs-keyword">import</span> TMultiplexedProcessor
+<span class="hljs-keyword">from</span> thrift.protocol <span class="hljs-keyword">import</span> TBinaryProtocol
+<span class="hljs-keyword">from</span> thrift.server <span class="hljs-keyword">import</span> TServer
+<span class="hljs-keyword">from</span> thrift.transport <span class="hljs-keyword">import</span> TTransport, TSocket
+
+sys.path.append(<span class="hljs-string">'./gen-py'</span>)
+
+<span class="hljs-keyword">from</span> my_thrift <span class="hljs-keyword">import</span> MessageService
+<span class="hljs-keyword">from</span> my_thrift <span class="hljs-keyword">import</span> UserService
+<span class="hljs-keyword">from</span> my_thrift.ttypes <span class="hljs-keyword">import</span> *
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MessageHandler</span>:</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getMessage</span><span class="hljs-params">(self, msg)</span>:</span>
+      <span class="hljs-keyword">return</span> msg
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">UserHandler</span>:</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getUser</span><span class="hljs-params">(self, user)</span>:</span>
+      <span class="hljs-keyword">return</span> user
+
+
+msg_processor = MessageService.Processor(MessageHandler()) <span class="hljs-comment">#定义msg处理器</span>
+use_processor = UserService.Processor(UserHandler()) <span class="hljs-comment">#定义user处理器</span>
+
+tfactory = TTransport.TBufferedTransportFactory()
+pfactory = TBinaryProtocol.TBinaryProtocolFactory()
+
+processor = TMultiplexedProcessor() <span class="hljs-comment">#使用TMultiplexedProcessor接收多个处理</span>
+processor.registerProcessor(<span class="hljs-string">"msg"</span>, msg_processor) <span class="hljs-comment">#注册msg服务</span>
+processor.registerProcessor(<span class="hljs-string">"user"</span>, use_processor) <span class="hljs-comment">#注册user服务</span>
+
+
+transport = TSocket.TServerSocket()
+server = TServer.TSimpleServer(processor, transport, tfactory, pfactory)
+
+server.serve() <span class="hljs-comment">#开始监听请求</span>
+</code></pre>
+<h1 id="客户端">客户端</h1>
+<p>client.py</p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment">#!/usr/bin/env python</span>
+<span class="hljs-comment"># # -*- coding: utf-8 -*-</span>
+
+<span class="hljs-keyword">import</span> sys
+<span class="hljs-keyword">from</span> thrift.protocol.TMultiplexedProtocol <span class="hljs-keyword">import</span> TMultiplexedProtocol
+
+sys.path.append(<span class="hljs-string">'./gen-py'</span>)
+<span class="hljs-keyword">from</span> thrift <span class="hljs-keyword">import</span> Thrift
+<span class="hljs-keyword">from</span> thrift.transport <span class="hljs-keyword">import</span> TSocket
+<span class="hljs-keyword">from</span> thrift.transport <span class="hljs-keyword">import</span> TTransport
+<span class="hljs-keyword">from</span> thrift.protocol <span class="hljs-keyword">import</span> TBinaryProtocol
+<span class="hljs-keyword">from</span> my_thrift <span class="hljs-keyword">import</span> MessageService
+<span class="hljs-keyword">from</span> my_thrift <span class="hljs-keyword">import</span> UserService
+<span class="hljs-keyword">from</span> my_thrift.ttypes <span class="hljs-keyword">import</span> *
+
+
+transport = TSocket.TSocket()
+
+transport = TTransport.TBufferedTransport(transport)
+
+protocol = TBinaryProtocol.TBinaryProtocol(transport)
+
+msg_protocol = TMultiplexedProtocol(protocol, <span class="hljs-string">"msg"</span>) <span class="hljs-comment">#如果服务端使用TMultiplexedProcessor接收处理，客户端必须用TMultiplexedProtocol并且指定serviceName和服务端的一致</span>
+user_protocol = TMultiplexedProtocol(protocol, <span class="hljs-string">"user"</span>)
+
+msg_client = MessageService.Client(msg_protocol)<span class="hljs-comment">#msg客户端</span>
+user_client = UserService.Client(user_protocol)<span class="hljs-comment">#user客户端</span>
+transport.open()<span class="hljs-comment">#打开链接</span>
+
+<span class="hljs-keyword">print</span> msg_client.getMessage(Message(msg=<span class="hljs-string">"111"</span>))
+<span class="hljs-keyword">print</span> user_client.getUser(User(name=<span class="hljs-string">"111"</span>))
+
+transport.close()</code></pre></div>
+
+</div>

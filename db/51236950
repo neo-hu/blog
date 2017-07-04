@@ -1,0 +1,323 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><p><img alt="Haproxy Tornado笔记" src="http://img.blog.csdn.net/20160424234018561" title=""/></p>
+<ul>
+<li><strong>haproxy: 负载均衡，动静态分离 </strong></li>
+<li><strong>keepalived: haproxy主备 </strong></li>
+<li><strong>varnish: 静态文件缓存 </strong></li>
+<li><strong>supervisor: 管理Tornado进程</strong></li>
+</ul>
+<h1 id="环境">环境</h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th align="left"></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>eth0:192.168.31.197<br>eth1:10.10.100.100</br></td>
+<td align="left">haproxy主机</td>
+</tr>
+<tr>
+<td>eth0:192.168.31.159 <br> eth1:10.10.100.101</br></td>
+<td align="left">haproxy备机</td>
+</tr>
+<tr>
+<td>eth0:10.10.100.53</td>
+<td align="left">真实机器</td>
+</tr>
+<tr>
+<td>eth0:10.10.100.54</td>
+<td align="left">真实机器</td>
+</tr>
+<tr>
+<td>eth0:10.10.100.57</td>
+<td align="left">varnish真实机器(静态文件)</td>
+</tr>
+</tbody></table>
+<h1 id="真实机器配置">真实机器配置</h1>
+<blockquote>
+<p>在10.10.100.53和10.10.100.54上安装和配置</p>
+</blockquote>
+<h2 id="supervisor配置">supervisor配置</h2>
+<h3 id="安装">安装</h3>
+<p><a href="http://blog.csdn.net/u010066807/article/details/51138728#t0">supervisor 安装</a></p>
+<h3 id="配置">配置</h3>
+<pre class="prettyprint"><code class=" hljs avrasm">vim /etc/supervisor/supervisord<span class="hljs-preprocessor">.conf</span> </code></pre>
+<pre class="prettyprint"><code class=" hljs ini"><span class="hljs-title">[group:tornados]</span>
+<span class="hljs-setting">programs=<span class="hljs-value">haproxy_tornado</span></span>
+
+<span class="hljs-title">[program:haproxy_tornado]</span>
+<span class="hljs-setting">numprocs=<span class="hljs-value"><span class="hljs-number">8</span> #我当前机器<span class="hljs-number">10</span>核，开启<span class="hljs-number">8</span>个进程</span></span>
+<span class="hljs-setting">numprocs_start=<span class="hljs-value"><span class="hljs-number">1</span></span></span>
+<span class="hljs-setting">command=<span class="hljs-value">python /var/www/haproxy_tornado/server.py --port=<span class="hljs-number">81</span>%(process_num)<span class="hljs-number">02</span>d #测试项目</span></span>
+<span class="hljs-setting">process_name=<span class="hljs-value">%(program_name)s%(process_num)d</span></span>
+<span class="hljs-setting">directory=<span class="hljs-value">/var/www/haproxy_tornado/</span></span>
+<span class="hljs-setting">autorestart=<span class="hljs-value"><span class="hljs-keyword">true</span></span></span>
+<span class="hljs-setting">redirect_stderr=<span class="hljs-value"><span class="hljs-keyword">true</span></span></span>
+<span class="hljs-setting">stdout_logfile=<span class="hljs-value">/tmp/haproxy_tornado.log</span></span>
+<span class="hljs-setting">stdout_logfile_maxbytes=<span class="hljs-value"><span class="hljs-number">500</span>MB</span></span>
+<span class="hljs-setting">stdout_logfile_backups=<span class="hljs-value"><span class="hljs-number">50</span></span></span>
+<span class="hljs-setting">stderr_logfile=<span class="hljs-value">/tmp/haproxy_tornado.log</span></span>
+<span class="hljs-setting">autostart=<span class="hljs-value"><span class="hljs-keyword">true</span></span></span>
+<span class="hljs-setting">loglevel=<span class="hljs-value">info</span></span>
+<span class="hljs-setting">user=<span class="hljs-value">www-data</span></span></code></pre>
+<pre class="prettyprint"><code class=" hljs bash">supervisorctl reload<span class="hljs-comment">#加载配置</span>
+supervisorctl status<span class="hljs-comment">#查看状态</span></code></pre>
+<h2 id="nginx配置">nginx配置</h2>
+<pre class="prettyprint"><code class=" hljs nginx">
+<span class="hljs-title">upstream</span> haproxy_tornado {<span class="hljs-comment">#supervisor起了8个进程，这轮询这几个进程</span>
+  <span class="hljs-title">server</span>  <span class="hljs-number">0.0.0.0:8101</span>;
+  <span class="hljs-title">server</span>  <span class="hljs-number">0.0.0.0:8102</span>;
+  <span class="hljs-title">server</span>  <span class="hljs-number">0.0.0.0:8103</span>;
+  <span class="hljs-title">server</span>  <span class="hljs-number">0.0.0.0:8104</span>;
+  <span class="hljs-title">server</span>  <span class="hljs-number">0.0.0.0:8105</span>;
+  <span class="hljs-title">server</span>  <span class="hljs-number">0.0.0.0:8106</span>;
+  <span class="hljs-title">server</span>  <span class="hljs-number">0.0.0.0:8107</span>;
+  <span class="hljs-title">server</span>  <span class="hljs-number">0.0.0.0:8108</span>;
+}
+
+<span class="hljs-title">server</span> {
+    <span class="hljs-title">listen</span> <span class="hljs-number">80</span>;
+    <span class="hljs-title">root</span> /var/www/haproxy_tornado/;
+    <span class="hljs-title">index</span> index.html index.htm;
+    <span class="hljs-title">server_name</span> localhost;
+    <span class="hljs-title">access_log</span> /var/log/nginx/haproxy_tornado_access.log;
+    <span class="hljs-title">error_log</span> /var/log/nginx/haproxy_tornado_error.log;
+    <span class="hljs-title">location</span> <span class="hljs-regexp">~ ^(/static/)</span> {
+        <span class="hljs-title">root</span> /var/www/haproxy_tornado/;
+        <span class="hljs-title">expires</span> <span class="hljs-number">7d</span>;
+        <span class="hljs-title">access_log</span>   <span class="hljs-built_in">off</span>;
+    }
+
+    <span class="hljs-title">location</span> <span class="hljs-regexp">~ ^(/media/).*\.(jpg|jpeg|png|gif)$</span> {
+        <span class="hljs-title">root</span> /var/www/haproxy_tornado//;
+        <span class="hljs-title">expires</span> <span class="hljs-number">15d</span>;
+        <span class="hljs-title">access_log</span>   <span class="hljs-built_in">off</span>;
+        <span class="hljs-title">try_files</span> <span class="hljs-variable">$uri</span> =<span class="hljs-number">404</span> /static/empty.gif;
+    }
+
+    <span class="hljs-title">location</span> <span class="hljs-regexp">~* ^.+\.(jpg|jpeg|gif|png|ico|css|zip|tgz|gz|rar|bz2|doc|xls|exe|pdf|ppt|txt|tar|mid|midi|wav|bmp|rtf|js|mov)</span> {
+        <span class="hljs-title">access_log</span>   <span class="hljs-built_in">off</span>;
+    }
+
+    <span class="hljs-title">location</span> / {
+        <span class="hljs-title">proxy_pass</span>         <span class="hljs-url">http://haproxy_tornado</span>;
+        <span class="hljs-title">proxy_set_header</span>   Host             <span class="hljs-variable">$host</span>;
+        <span class="hljs-title">proxy_set_header</span>   X-Real-IP        <span class="hljs-variable">$remote_addr</span>;
+        <span class="hljs-title">proxy_set_header</span>   X-Forwarded-For  <span class="hljs-variable">$proxy_add_x_forwarded_for</span>;
+    }
+}
+</code></pre>
+<pre class="prettyprint"><code class=" hljs bash">nginx -t <span class="hljs-comment">#检查配置文件</span>
+nginx <span class="hljs-operator">-s</span> reload <span class="hljs-comment">#加载配置文件</span></code></pre>
+<h1 id="静态主机配置">静态主机配置</h1>
+<blockquote>
+<p>在10.10.100.57上安装和配置</p>
+</blockquote>
+<h2 id="nginx配置-1">nginx配置</h2>
+<pre class="prettyprint"><code class=" hljs perl">server {
+    <span class="hljs-keyword">listen</span> <span class="hljs-number">80</span>;
+    root /var/www/haproxy_tornado/;
+    <span class="hljs-keyword">index</span> <span class="hljs-keyword">index</span>.html <span class="hljs-keyword">index</span>.htm;
+    server_name localhost;
+    access_log /var/<span class="hljs-keyword">log</span>/nginx/haproxy_tornado_access.<span class="hljs-keyword">log</span>;
+    error_log /var/<span class="hljs-keyword">log</span>/nginx/haproxy_tornado_error.<span class="hljs-keyword">log</span>;
+    location ~ ^(<span class="hljs-regexp">/static/</span>) {
+        proxy_hide_header <span class="hljs-string">"Set-Cookie"</span>;
+        proxy_ignore_headers <span class="hljs-string">"Set-Cookie"</span>;
+        root /var/www/haproxy_tornado/;
+        expires <span class="hljs-number">7</span>d;
+        access_log   off;
+    }
+}
+</code></pre>
+<pre class="prettyprint"><code class=" hljs bash">nginx -t <span class="hljs-comment">#检查配置文件</span>
+nginx <span class="hljs-operator">-s</span> reload <span class="hljs-comment">#加载配置文件</span></code></pre>
+<h2 id="varnish配置">varnish配置</h2>
+<pre class="prettyprint"><code class=" hljs perl">vim /etc/varnish/default.vcl
+
+vcl <span class="hljs-number">4.0</span>;
+
+<span class="hljs-comment"># Default backend definition. Set this to point to your content server.</span>
+<span class="hljs-comment">#后端的HTTP服务器IP和端口</span>
+backend default {
+    .host = <span class="hljs-string">"127.0.0.1"</span>;
+    .port = <span class="hljs-string">"8001"</span>;
+}
+
+<span class="hljs-comment">#设置清理缓存的IP</span>
+acl purgers {
+    <span class="hljs-string">"127.0.0.1"</span>;
+}
+
+<span class="hljs-sub"><span class="hljs-keyword">sub</span> vcl_recv {</span>
+    <span class="hljs-keyword">if</span> (req.method == <span class="hljs-string">"PURGE"</span>) {    <span class="hljs-comment"># PURGE请求的处理</span>
+        <span class="hljs-keyword">if</span> (!client.ip ~ purgers) {
+            <span class="hljs-keyword">return</span>(synth(<span class="hljs-number">405</span>,<span class="hljs-string">"Method not allowed"</span>));
+        }
+        <span class="hljs-comment">#清理缓存</span>
+        <span class="hljs-keyword">return</span>(purge);
+    }
+
+    <span class="hljs-keyword">if</span> (req.method != <span class="hljs-string">"GET"</span> &amp;&amp; req.method != <span class="hljs-string">"HEAD"</span>) {
+        <span class="hljs-keyword">return</span> (pass);
+    }
+     <span class="hljs-comment">#不缓存认证信息</span>
+    <span class="hljs-keyword">if</span> (req.http.Authorization ) {
+        <span class="hljs-keyword">return</span> (pass);
+    }
+    <span class="hljs-comment">#不正常的访问不缓存</span>
+    <span class="hljs-keyword">if</span> (req.method != <span class="hljs-string">"GET"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"HEAD"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"PUT"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"POST"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"TRACE"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"OPTIONS"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"PATCH"</span> &amp;&amp;
+            req.method != <span class="hljs-string">"DELETE"</span>) {
+        <span class="hljs-keyword">return</span> (<span class="hljs-keyword">pipe</span>);
+    }
+    <span class="hljs-keyword">return</span> (hash);
+}
+
+<span class="hljs-sub"><span class="hljs-keyword">sub</span> vcl_backend_response {</span>
+}
+
+
+<span class="hljs-sub"><span class="hljs-keyword">sub</span> vcl_deliver {</span>
+ <span class="hljs-keyword">if</span> (obj.hits &gt; <span class="hljs-number">0</span>) {
+        <span class="hljs-comment">#如果命中缓存 Response Headers x-cache-lookup= MemCache</span>
+        set resp.http.<span class="hljs-keyword">x</span>-cache= <span class="hljs-string">"MemCache"</span>;
+    } <span class="hljs-keyword">else</span> {
+        set resp.http.<span class="hljs-keyword">x</span>-cache= <span class="hljs-string">"MISS"</span>;
+    }
+    <span class="hljs-comment">#删除Response Headers 部分信息</span>
+    <span class="hljs-comment">#unset resp.http.Server;</span>
+    <span class="hljs-comment">#unset resp.http.X-Drupal-Cache;</span>
+    <span class="hljs-comment">#unset resp.http.X-Varnish;</span>
+    <span class="hljs-comment">#unset resp.http.Via;</span>
+    <span class="hljs-comment">#unset resp.http.Age;</span>
+    <span class="hljs-comment">#unset resp.http.Link;</span>
+}</code></pre>
+<h1 id="haproxy主机配置">haproxy主机配置</h1>
+<h2 id="haproxy配置">haproxy配置</h2>
+<pre class="prettyprint"><code class=" hljs avrasm">vim /etc/haproxy/haproxy<span class="hljs-preprocessor">.cfg</span></code></pre>
+<pre class="prettyprint"><code class=" hljs livecodeserver"><span class="hljs-built_in">global</span>
+    <span class="hljs-built_in">log</span> <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span> local0 err
+    chroot /var/lib/haproxy   <span class="hljs-comment">#改变当前工作目录</span>
+    user haproxy         <span class="hljs-comment">#所属用户</span>
+    group haproxy        <span class="hljs-comment">#所属组</span>
+    daemon                <span class="hljs-comment">#以守护进程方式运行haproxy</span>
+
+defaults
+    <span class="hljs-built_in">log</span> <span class="hljs-built_in">global</span>
+    mode    <span class="hljs-keyword">http</span>    <span class="hljs-comment">#默认的模式mode { tcp|http|health }</span>
+    option  httplog  <span class="hljs-comment">#启用记录HTTP请求、会话状态和计时器的功能</span>
+    option  dontlognull <span class="hljs-comment">#保证HAProxy不记录上级负载均衡发送过来的用于检测状态没有数据的心跳包。</span>
+    contimeout <span class="hljs-number">5000</span>      <span class="hljs-comment">#客户端超时时间，</span>
+    clitimeout <span class="hljs-number">50000</span>  <span class="hljs-comment">#设置连接客户端发送数据时的成功连接最长等待时间</span>
+    srvtimeout <span class="hljs-number">50000</span> <span class="hljs-comment">#设置服务器端回应客户度数据发送的最长等待时间</span>
+    errorfile <span class="hljs-number">400</span> /etc/haproxy/errors/<span class="hljs-number">400.</span><span class="hljs-keyword">http</span>
+    errorfile <span class="hljs-number">403</span> /etc/haproxy/errors/<span class="hljs-number">403.</span><span class="hljs-keyword">http</span>
+    errorfile <span class="hljs-number">408</span> /etc/haproxy/errors/<span class="hljs-number">408.</span><span class="hljs-keyword">http</span>
+    errorfile <span class="hljs-number">500</span> /etc/haproxy/errors/<span class="hljs-number">500.</span><span class="hljs-keyword">http</span>
+    errorfile <span class="hljs-number">502</span> /etc/haproxy/errors/<span class="hljs-number">502.</span><span class="hljs-keyword">http</span>
+    errorfile <span class="hljs-number">503</span> /etc/haproxy/errors/<span class="hljs-number">503.</span><span class="hljs-keyword">http</span>
+    errorfile <span class="hljs-number">504</span> /etc/haproxy/errors/<span class="hljs-number">504.</span><span class="hljs-keyword">http</span>
+
+listen admin_stats  <span class="hljs-comment">#统计页面配置</span>
+    bind <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>:<span class="hljs-number">8888</span>
+    option httplog
+    stats refresh <span class="hljs-number">20</span>s
+    maxconn <span class="hljs-number">2000</span>
+    stats uri /stats <span class="hljs-comment">#统计页面url  http://0.0.0.0:8888/stats</span>
+    stats realm Haproxy Manager
+    stats auth admin:admin   <span class="hljs-comment">#统计页面用户名和密码设置</span>
+    stats admin <span class="hljs-keyword">if</span> <span class="hljs-constant">TRUE</span>
+
+frontend  haproxy_tornado
+    mode <span class="hljs-keyword">http</span>
+    bind <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>:<span class="hljs-number">80</span>
+    option forwardfor
+    option <span class="hljs-keyword">http</span>-server-<span class="hljs-built_in">close</span>
+    option <span class="hljs-keyword">http</span>-pretend-keepalive
+    acl url_static path_beg -i /static
+    use_backend real_static <span class="hljs-keyword">if</span> url_static <span class="hljs-comment">#静态主机</span>
+    default_backend real_haproxy_tornado <span class="hljs-comment">#默认主机</span>
+
+backend real_static <span class="hljs-comment">#静态主机</span>
+    balance roundrobin
+    server S1 <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.57</span>:<span class="hljs-number">80</span> check
+
+backend real_haproxy_tornado
+    balance roundrobin
+    server A <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.54</span>:<span class="hljs-number">80</span> check
+    server B <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.53</span>:<span class="hljs-number">80</span> check
+</code></pre>
+<h2 id="keepalived配置">keepalived配置</h2>
+<blockquote>
+<p>在haproxy主备上安装和配置</p>
+</blockquote>
+<h3 id="安装-1">安装</h3>
+<pre class="prettyprint"><code class=" hljs cs">apt-<span class="hljs-keyword">get</span> install keepalived</code></pre>
+<h3 id="配置-1">配置</h3>
+<pre class="prettyprint"><code class=" hljs avrasm">vim /etc/keepalived/keepalived<span class="hljs-preprocessor">.conf</span></code></pre>
+<pre class="prettyprint"><code class=" hljs mathematica">
+global_defs <span class="hljs-list">{
+   router_id LVSMaster
+}</span>
+
+vrrp_script chk_haproxy <span class="hljs-list">{
+    script "/etc/keepalived/check_haproxy.sh"
+    interval 2
+    weight 2
+}</span>
+
+
+vrrp_instance VI_1 <span class="hljs-list">{
+    state MASTER #备机为BACKUP
+    interface eth0
+    virtual_router_id 100
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 123456
+    }</span>
+    virtual_ipaddress <span class="hljs-list">{
+        192.168.31.200
+    }</span>
+    track_script <span class="hljs-list">{#检测haproxy进程是否存在
+        chk_haproxy
+    }</span>
+}
+</code></pre>
+<pre class="prettyprint"><code class=" hljs bash">vim /etc/keepalived/check_haproxy.sh
+
+<span class="hljs-shebang">#!/bin/bash
+</span>
+<span class="hljs-comment">#检测haproxy进程是否存在</span>
+<span class="hljs-keyword">if</span> [ `ps -C haproxy --no-header | wc <span class="hljs-operator">-l</span> ` <span class="hljs-operator">-eq</span> <span class="hljs-number">0</span> ];<span class="hljs-keyword">then</span>
+    <span class="hljs-comment">#不存在尝试启动haproxy</span>
+    service haproxy start
+    sleep <span class="hljs-number">3</span>
+    <span class="hljs-comment">#再次检测haproxy进程是否存在</span>
+    <span class="hljs-keyword">if</span> [ `ps -C haproxy --no-header | wc <span class="hljs-operator">-l</span> ` <span class="hljs-operator">-eq</span> <span class="hljs-number">0</span> ];<span class="hljs-keyword">then</span>
+        <span class="hljs-comment">#如果还没进程停止keepalived进程，VIP绑定到备机提供服务</span>
+        service keepalived stop
+    <span class="hljs-keyword">fi</span>
+
+<span class="hljs-keyword">fi</span></code></pre>
+<pre class="prettyprint"><code class=" hljs perl">
+<span class="hljs-keyword">chmod</span> +<span class="hljs-keyword">x</span> /etc/keepalived/check_haproxy.sh</code></pre>
+<h1 id="我现在的订单接口">我现在的订单接口</h1>
+<blockquote>
+<p>提供接口给每个项目使用，每天大概会插入200W条左右的数据，查询没统计过</p>
+</blockquote>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160425183019463" title=""/></p>
+<h1 id="配置文件">配置文件</h1>
+<p><a href="https://github.com/neo-hu/haproxy_tornado">https://github.com/neo-hu/haproxy_tornado</a></p>
+<p><img alt="" src="http://ip8.me:8888/home/api/public/referer.py" title=""/></p></div>
+
+</div>

@@ -105,8 +105,8 @@ def get_content(blog_url):
     return _l, str(article_content)
 
 
-# get_categories()
-
+get_categories()
+raise
 
 r = get_blogs()
 with open("db/articles.json", "wb") as f:

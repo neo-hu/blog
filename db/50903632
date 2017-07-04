@@ -1,0 +1,188 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="lambda">lambda</h1>
+<blockquote>
+<p>匿名函数</p>
+</blockquote>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">lambda</span> x: x * x
+实际就是
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">f</span><span class="hljs-params">(x)</span>:</span>
+    <span class="hljs-keyword">return</span> x * x</code></pre>
+<h1 id="map">map</h1>
+<blockquote>
+<p>map将传入的函数依次作用到序列的每个元素，并把结果作为新的list返回</p>
+</blockquote>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">a</span><span class="hljs-params">(x)</span>:</span>
+    <span class="hljs-keyword">return</span> x*<span class="hljs-number">2</span>
+<span class="hljs-keyword">print</span> map(a, [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>])
+<span class="hljs-comment">#结果</span>
+[<span class="hljs-number">2</span>, <span class="hljs-number">4</span>, <span class="hljs-number">6</span>, <span class="hljs-number">8</span>]</code></pre>
+<p><strong>or lambda</strong></p>
+<pre class="prettyprint"><code class=" hljs perl"><span class="hljs-keyword">print</span> <span class="hljs-keyword">map</span>(lambda <span class="hljs-keyword">x</span>: <span class="hljs-keyword">x</span><span class="hljs-variable">*2</span>, [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>])
+<span class="hljs-comment">#结果</span>
+[<span class="hljs-number">2</span>, <span class="hljs-number">4</span>, <span class="hljs-number">6</span>, <span class="hljs-number">8</span>]</code></pre>
+<h1 id="reduce">reduce</h1>
+<blockquote>
+<p>reduce把结果继续和序列的下一个元素做累积计算</p>
+</blockquote>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">b</span><span class="hljs-params">(x, y)</span>:</span>
+    <span class="hljs-keyword">return</span> x * y
+
+<span class="hljs-keyword">print</span> reduce(b, [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>])
+<span class="hljs-comment">#结果</span>
+<span class="hljs-number">24</span></code></pre>
+<p><strong>or lambda</strong></p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">print</span> reduce(<span class="hljs-keyword">lambda</span> x, y: x * y, [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>])
+<span class="hljs-comment">#结果</span>
+<span class="hljs-number">24</span></code></pre>
+<pre class="prettyprint"><code class=" hljs perl"><span class="hljs-comment">#流程</span>
+<span class="hljs-number">1</span>, <span class="hljs-number">1</span><span class="hljs-variable">*2</span> = <span class="hljs-number">2</span>
+<span class="hljs-number">2</span>, <span class="hljs-number">2</span><span class="hljs-variable">*3</span> = <span class="hljs-number">6</span>
+<span class="hljs-number">3</span>, <span class="hljs-number">6</span><span class="hljs-variable">*4</span> = <span class="hljs-number">24</span>
+</code></pre>
+<h1 id="filter">filter</h1>
+<blockquote>
+<p>filter()函数用于过滤序列</p>
+</blockquote>
+<p>过滤小于2的数</p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">c</span><span class="hljs-params">(x)</span>:</span>
+    <span class="hljs-keyword">return</span> x&gt;=<span class="hljs-number">2</span>
+<span class="hljs-keyword">print</span> filter(c, [<span class="hljs-keyword">None</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>])
+<span class="hljs-comment">#结果</span>
+[<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>]</code></pre>
+<p><strong>or lambda</strong></p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">print</span> filter(<span class="hljs-keyword">lambda</span> x: x&gt;=<span class="hljs-number">2</span>, [<span class="hljs-keyword">None</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>])
+<span class="hljs-comment">#结果</span>
+[<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>]</code></pre>
+<p><strong>过滤None的数据</strong></p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">print</span> filter(<span class="hljs-keyword">None</span>, [<span class="hljs-keyword">None</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>])
+<span class="hljs-comment">#结果</span>
+[<span class="hljs-number">1</span>,<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>]</code></pre>
+<h1 id="sorted">sorted</h1>
+<blockquote>
+<p>序列排序</p>
+</blockquote>
+<pre class="prettyprint"><code class=" hljs css"><span class="hljs-tag">print</span> <span class="hljs-tag">sorted</span>(<span class="hljs-attr_selector">[11, 21, 3, 4]</span>)
+#结果
+<span class="hljs-attr_selector">[3, 4, 11, 21]</span></code></pre>
+<p><strong>对象排序</strong></p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">C1</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, age)</span>:</span>
+        self.age = age
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__cmp__</span><span class="hljs-params">(self, y)</span>:</span>
+        <span class="hljs-keyword">return</span> self.age &gt; y.age <span class="hljs-keyword">and</span> <span class="hljs-number">1</span> <span class="hljs-keyword">or</span> -<span class="hljs-number">1</span>
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__str__</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">return</span> str(self.age)
+
+
+c1 = [C1(<span class="hljs-number">11</span>), C1(<span class="hljs-number">21</span>), C1(<span class="hljs-number">2</span>), C1(<span class="hljs-number">1</span>)]
+<span class="hljs-keyword">print</span> [c.age <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> c1]
+<span class="hljs-comment">#C1 必须实现__cmp__方法</span>
+c2 = sorted(c1)
+c3 = sorted(c1, <span class="hljs-keyword">lambda</span> x,y: x.age &gt; y.age <span class="hljs-keyword">and</span> <span class="hljs-number">1</span> <span class="hljs-keyword">or</span> -<span class="hljs-number">1</span>)
+<span class="hljs-keyword">print</span> [c.age <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> c2]
+<span class="hljs-keyword">print</span> [c.age <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> c3]</code></pre>
+<h1 id="partial">partial</h1>
+<blockquote>
+<p>functools.partial的作用就是，把一个函数的某些参数给固定住（也就是设置默认值），返回一个新的函数，调用这个新函数会更简单。</p>
+</blockquote>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">from</span> functools <span class="hljs-keyword">import</span> partial
+
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">A1</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, name)</span>:</span>
+        self.name = name
+
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">B1</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, name)</span>:</span>
+        self.name = name
+
+a1 = A1(<span class="hljs-string">"A1"</span>)
+b1 = B1(<span class="hljs-string">"B1"</span>)
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_field</span><span class="hljs-params">(obj, field)</span>:</span>
+    <span class="hljs-keyword">return</span> getattr(obj, field)
+c = partial(get_field, field=<span class="hljs-string">"name"</span>)
+d = partial(<span class="hljs-keyword">lambda</span> obj, field: getattr(obj, field), field=<span class="hljs-string">"name"</span>)
+
+<span class="hljs-comment">#get_field(a1, "name") == c == d</span>
+<span class="hljs-keyword">print</span> get_field(a1, <span class="hljs-string">"name"</span>)
+<span class="hljs-keyword">print</span> c(a1)
+<span class="hljs-keyword">print</span> d(a1)
+
+结果
+A1
+A1
+A1</code></pre>
+<h1 id="property">property</h1>
+<blockquote>
+<p>在绑定属性时，如果我们直接把属性暴露出去，虽然写起来很简单，但是，没办法检查参数 <br>
+  为了限制属性的范围，可以吧属性设置成私有的，在通过一个set_属性()方法来设置属性，通过一个get_属性()来获取属性，这样，在set_属性()方法里，就可以检查参数</br></p>
+</blockquote>
+<pre class="prettyprint"><code class=" hljs python">
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">D1</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, age)</span>:</span>
+        self.__age = age
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_age</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">return</span> self.__age
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">set_age</span><span class="hljs-params">(self, age)</span>:</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> isinstance(age, int):
+            <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">'age must be an integer!'</span>)
+        self.__age = age
+
+d1 = D1(<span class="hljs-number">11</span>)
+<span class="hljs-keyword">print</span> d1.get_age()
+d1.set_age(<span class="hljs-number">22222</span>)
+<span class="hljs-keyword">print</span> d1.get_age()</code></pre>
+<p><strong>装饰器</strong></p>
+<pre class="prettyprint"><code class=" hljs python">
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">D1</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, age)</span>:</span>
+        self.__age = age
+
+    <span class="hljs-decorator">@property</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">age</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">return</span> self.__age
+
+    <span class="hljs-decorator">@age.setter</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">age</span><span class="hljs-params">(self, age)</span>:</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> isinstance(age, int):
+            <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">'age must be an integer!'</span>)
+        self.__age = age
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_age</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">return</span> self.__age
+
+d1 = D1(<span class="hljs-number">11</span>)
+<span class="hljs-keyword">print</span> d1.age
+d1.age = <span class="hljs-number">222</span>
+<span class="hljs-keyword">print</span> d1.age
+<span class="hljs-keyword">print</span> d1.get_age()</code></pre>
+<p><strong>or</strong></p>
+<pre class="prettyprint"><code class=" hljs python">
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">D1</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, age)</span>:</span>
+        self.__age = age
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__set_age</span><span class="hljs-params">(self, age)</span>:</span>
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> isinstance(age, int):
+            <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">'age must be an integer!'</span>)
+        self.__age = age
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__get_age</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">return</span> self.__age
+
+    age = property(__get_age, __set_age)
+    <span class="hljs-keyword">del</span> __get_age, __set_age
+
+
+d1 = D1(<span class="hljs-number">11</span>)
+<span class="hljs-keyword">print</span> d1.age
+d1.age = <span class="hljs-number">100</span>
+<span class="hljs-keyword">print</span> d1.age</code></pre></div>
+
+</div>

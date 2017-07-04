@@ -1,0 +1,111 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><p>我的环境：VMware workstation + 3台 Ubuntu 12.04.5 LTS 版本的。 <br>
+<strong><a href="http://blog.csdn.net/u010066807/article/details/50659832">pssh进行并行批量操作</a></strong></br></p>
+<h1 id="lvsnat">LVS/NAT</h1>
+<p>我配置的LVS/NAT配置的拓扑图如下 <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160213202126164" title=""/></br></p>
+<blockquote>
+<p>调度服务器:2个网卡一个桥接(192.168.31.206 )，一个host-only(10.10.100.52 ) <br>
+  真实服务器：10.10.100.51/53 ,（仿内网模式，都是host-only）</br></p>
+</blockquote>
+<h2 id="安装lvs">安装LVS</h2>
+<pre class="prettyprint"><code class=" hljs bash"><span class="hljs-built_in">sudo</span> apt-get install ipvsadm</code></pre>
+<h2 id="调度服务器配置">调度服务器配置</h2>
+<h3 id="开启路由转发功能">开启路由转发功能</h3>
+<pre class="prettyprint"><code class=" hljs avrasm">vim /etc/sysctl<span class="hljs-preprocessor">.conf</span></code></pre>
+<p>修改ip_forward</p>
+<pre class="prettyprint"><code class=" hljs avrasm">net<span class="hljs-preprocessor">.ipv</span>4<span class="hljs-preprocessor">.ip</span>_forward=<span class="hljs-number">1</span></code></pre>
+<pre class="prettyprint"><code class=" hljs lasso"><span class="hljs-comment">//让参数生效</span>
+sysctl <span class="hljs-attribute">-p</span></code></pre>
+<h3 id="添加ip记录和规则">添加IP记录和规则</h3>
+<pre class="prettyprint"><code class=" hljs lasso">ipvsadm <span class="hljs-attribute">-A</span> <span class="hljs-attribute">-t</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.206</span>:<span class="hljs-number">80</span> <span class="hljs-attribute">-s</span> rr        <span class="hljs-comment">//这个IP地址就是用户访问的ip或者VIP地址</span>
+
+ipvsadm <span class="hljs-attribute">-a</span> <span class="hljs-attribute">-t</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.206</span>:<span class="hljs-number">80</span> <span class="hljs-attribute">-r</span> <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.51</span>:<span class="hljs-number">80</span> <span class="hljs-attribute">-m</span> <span class="hljs-attribute">-w</span> <span class="hljs-number">1</span>
+ipvsadm <span class="hljs-attribute">-a</span> <span class="hljs-attribute">-t</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.206</span>:<span class="hljs-number">80</span> <span class="hljs-attribute">-r</span> <span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.53</span>:<span class="hljs-number">80</span> <span class="hljs-attribute">-m</span>
+</code></pre>
+<blockquote>
+<p>说明：-m  指定LVS 的工作模式为NAT 模式 ，rr表示采用轮询调度算法，这里还可以采用其他调度算法如wrr(加权轮询调度算法)，-w在使用加权轮询调度算法时，还可以在添加规则时改变权值，一般默认权值为1</p>
+</blockquote>
+<h2 id="真实服务器配置">真实服务器配置</h2>
+<pre class="prettyprint"><code class=" hljs ruby"><span class="hljs-comment">#真实服务器IP</span>
+hu<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>cat lvs.txt
+root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">51</span>
+root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">53</span>
+hu<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span></code></pre>
+<h3 id="网关">网关</h3>
+<pre class="prettyprint"><code class=" hljs ruby">hu<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>pssh -h lvs.txt -i <span class="hljs-string">'route add default gw 10.10.100.52'</span>
+[<span class="hljs-number">1</span>] <span class="hljs-number">20</span><span class="hljs-symbol">:</span><span class="hljs-number">36</span><span class="hljs-symbol">:</span><span class="hljs-number">48</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">51</span>
+[<span class="hljs-number">2</span>] <span class="hljs-number">20</span><span class="hljs-symbol">:</span><span class="hljs-number">36</span><span class="hljs-symbol">:</span><span class="hljs-number">48</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">53</span></code></pre>
+<blockquote>
+<p>在2台真实的服务器配置网关，是把真实服务器处理的结果交给调度服务器去响应给用户</p>
+</blockquote>
+<h3 id="安装nginx">安装nginx</h3>
+<pre class="prettyprint"><code class=" hljs lasso"><span class="hljs-comment">//内网没有源的可以测试ssh端口22或者其他端口</span>
+pssh <span class="hljs-attribute">-h</span> lvs<span class="hljs-built_in">.</span>txt <span class="hljs-attribute">-i</span> <span class="hljs-string">'apt-get install nginx'</span></code></pre>
+<p>安装完成查看80端口</p>
+<pre class="prettyprint"><code class=" hljs haskell"><span class="hljs-title">hu</span>@ubuntu:~$ pssh -h lvs.txt -i 'lsof -i:<span class="hljs-number">80</span>'
+[<span class="hljs-number">1</span>] <span class="hljs-number">20</span>:<span class="hljs-number">19</span>:<span class="hljs-number">35</span> [<span class="hljs-type">SUCCESS</span>] root@<span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.51</span>
+<span class="hljs-type">COMMAND</span>  <span class="hljs-type">PID</span>     <span class="hljs-type">USER</span>   <span class="hljs-type">FD</span>   <span class="hljs-type">TYPE</span> <span class="hljs-type">DEVICE</span> <span class="hljs-type">SIZE</span>/<span class="hljs-type">OFF</span> <span class="hljs-type">NODE</span> <span class="hljs-type">NAME</span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1127</span>     root    <span class="hljs-number">6</span>u  <span class="hljs-type">IPv4</span>   <span class="hljs-number">9227</span>      <span class="hljs-number">0</span>t0  <span class="hljs-type">TCP</span> *:http (<span class="hljs-type">LISTEN</span>)
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1127</span>     root    <span class="hljs-number">7</span>u  <span class="hljs-type">IPv6</span>   <span class="hljs-number">9228</span>      <span class="hljs-number">0</span>t0  <span class="hljs-type">TCP</span> *:http (<span class="hljs-type">LISTEN</span>)
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1128</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    6u  <span class="hljs-type">IPv4</span>   9227      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1128</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    7u  <span class="hljs-type">IPv6</span>   9228      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1129</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    6u  <span class="hljs-type">IPv4</span>   9227      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1129</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    7u  <span class="hljs-type">IPv6</span>   9228      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1130</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    6u  <span class="hljs-type">IPv4</span>   9227      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1130</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    7u  <span class="hljs-type">IPv6</span>   9228      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1131</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    6u  <span class="hljs-type">IPv4</span>   9227      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1131</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    7u  <span class="hljs-type">IPv6</span>   9228      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+[<span class="hljs-number">2</span>] <span class="hljs-number">20</span>:<span class="hljs-number">19</span>:<span class="hljs-number">35</span> [<span class="hljs-type">SUCCESS</span>] root@<span class="hljs-number">10.10</span><span class="hljs-number">.100</span><span class="hljs-number">.53</span>
+<span class="hljs-type">COMMAND</span>  <span class="hljs-type">PID</span>     <span class="hljs-type">USER</span>   <span class="hljs-type">FD</span>   <span class="hljs-type">TYPE</span> <span class="hljs-type">DEVICE</span> <span class="hljs-type">SIZE</span>/<span class="hljs-type">OFF</span> <span class="hljs-type">NODE</span> <span class="hljs-type">NAME</span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1030</span>     root    <span class="hljs-number">6</span>u  <span class="hljs-type">IPv4</span>   <span class="hljs-number">9062</span>      <span class="hljs-number">0</span>t0  <span class="hljs-type">TCP</span> *:http (<span class="hljs-type">LISTEN</span>)
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1030</span>     root    <span class="hljs-number">7</span>u  <span class="hljs-type">IPv6</span>   <span class="hljs-number">9063</span>      <span class="hljs-number">0</span>t0  <span class="hljs-type">TCP</span> *:http (<span class="hljs-type">LISTEN</span>)
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1032</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    6u  <span class="hljs-type">IPv4</span>   9062      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1032</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    7u  <span class="hljs-type">IPv6</span>   9063      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1033</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    6u  <span class="hljs-type">IPv4</span>   9062      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1033</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    7u  <span class="hljs-type">IPv6</span>   9063      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1034</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    6u  <span class="hljs-type">IPv4</span>   9062      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1034</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    7u  <span class="hljs-type">IPv6</span>   9063      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1035</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    6u  <span class="hljs-type">IPv4</span>   9062      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+<span class="hljs-title">nginx</span>   <span class="hljs-number">1035</span> www-<span class="hljs-typedef"><span class="hljs-keyword">data</span>    7u  <span class="hljs-type">IPv6</span>   9063      0t0  <span class="hljs-type">TCP</span> *:http <span class="hljs-container">(<span class="hljs-type">LISTEN</span>)</span></span>
+</code></pre>
+<p><em>2个真实的服务器http服务启动了</em></p>
+<h3 id="测试">测试</h3>
+<blockquote>
+<p>为了知道到底是访问到哪台了，分别修改下/usr/share/nginx/html/index.html(查看/etc/nginx/sites-available/default 的root )</p>
+</blockquote>
+<pre class="prettyprint"><code class=" hljs ruby">hu<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:~</span><span class="hljs-variable">$ </span>pssh -h lvs.txt -i <span class="hljs-string">'hostname &gt; /usr/share/nginx/html/index.html'</span>
+[<span class="hljs-number">1</span>] <span class="hljs-number">20</span><span class="hljs-symbol">:</span><span class="hljs-number">42</span><span class="hljs-symbol">:</span><span class="hljs-number">25</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">51</span>
+[<span class="hljs-number">2</span>] <span class="hljs-number">20</span><span class="hljs-symbol">:</span><span class="hljs-number">42</span><span class="hljs-symbol">:</span><span class="hljs-number">25</span> [<span class="hljs-constant">SUCCESS</span>] root<span class="hljs-variable">@10</span>.<span class="hljs-number">10.100</span>.<span class="hljs-number">53</span></code></pre>
+<blockquote>
+<p>访问 <a href="http://10.10.100.51/">http://10.10.100.51/</a>  为zoo1    <a href="http://10.10.100.53/">http://10.10.100.53/</a>  为zoo2</p>
+<p>访问调度服务器 <a href="http://192.168.31.206/">http://192.168.31.206/</a> 返回的内容不是zoo1就是zoo2.(多刷新几次才有效，Ctrl+F5)</p>
+</blockquote>
+<h2 id="vip配置">VIP配置</h2>
+<p>如果需要keepalived  <br>
+真实服务器的路由改成</br></p>
+<pre class="prettyprint"><code class=" hljs php">route add <span class="hljs-keyword">default</span> gw <span class="hljs-variable">$vip</span></code></pre>
+<h1 id="lvsdr">LVS/DR</h1>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160221154549812" title=""> <br>
+<strong>eth0:1 为vip 192.168.31.200</strong></br></img></p>
+<h2 id="调度服务器配置-1">调度服务器配置</h2>
+<pre class="prettyprint"><code class=" hljs lasso">ifconfig eth0:<span class="hljs-number">1</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.200</span> broadcast <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.200</span> netmask <span class="hljs-number">255.255</span><span class="hljs-number">.255</span><span class="hljs-number">.255</span> up
+route add <span class="hljs-attribute">-host</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.200</span> dev eth0:<span class="hljs-number">1</span>
+ipvsadm <span class="hljs-attribute">-C</span>
+ipvsadm <span class="hljs-attribute">-A</span> <span class="hljs-attribute">-t</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.200</span>:<span class="hljs-number">80</span> <span class="hljs-attribute">-s</span> rr <span class="hljs-attribute">-p</span> <span class="hljs-number">600</span>
+ipvsadm <span class="hljs-attribute">-a</span> <span class="hljs-attribute">-t</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.200</span>:http <span class="hljs-attribute">-r</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.186</span>:http <span class="hljs-attribute">-g</span>
+ipvsadm <span class="hljs-attribute">-a</span> <span class="hljs-attribute">-t</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.200</span>:http <span class="hljs-attribute">-r</span> <span class="hljs-number">192.168</span><span class="hljs-number">.31</span><span class="hljs-number">.187</span>:http <span class="hljs-attribute">-g</span></code></pre>
+<p><em>-g是使用DR模式</em></p>
+<h2 id="真实服务器配置-1">真实服务器配置</h2>
+<pre class="prettyprint"><code class=" hljs ruby">ifconfig <span class="hljs-symbol">lo:</span><span class="hljs-number">0</span> <span class="hljs-number">192.168</span>.<span class="hljs-number">31.200</span> broadcast <span class="hljs-number">192.168</span>.<span class="hljs-number">31.200</span> netmask <span class="hljs-number">255.255</span>.<span class="hljs-number">255.255</span> up
+route add -host <span class="hljs-number">192.168</span>.<span class="hljs-number">31.200</span> dev <span class="hljs-symbol">lo:</span><span class="hljs-number">0</span>
+
+echo <span class="hljs-string">"1"</span> &gt;<span class="hljs-regexp">/proc/sys</span><span class="hljs-regexp">/net/ipv</span>4/conf/lo/arp_ignore
+echo <span class="hljs-string">"2"</span> &gt;<span class="hljs-regexp">/proc/sys</span><span class="hljs-regexp">/net/ipv</span>4/conf/lo/arp_announce
+echo <span class="hljs-string">"1"</span> &gt;<span class="hljs-regexp">/proc/sys</span><span class="hljs-regexp">/net/ipv</span>4/conf/all/arp_ignore
+echo <span class="hljs-string">"2"</span> &gt;<span class="hljs-regexp">/proc/sys</span><span class="hljs-regexp">/net/ipv</span>4/conf/all/arp_announce
+sysctl -p</code></pre>
+<h2 id="测试-1">测试</h2>
+<p>同上</p></div>
+
+</div>

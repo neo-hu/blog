@@ -1,0 +1,117 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="环境">环境</h1>
+<p><a href="http://blog.csdn.net/u010066807/article/details/50924312">延用<strong>mysql 主主+主从笔记</strong>的环境</a></p>
+<p>java version “1.8.0_73”</p>
+<h1 id="安装">安装</h1>
+<pre class="prettyprint"><code class=" hljs avrasm">wget  http://nchc<span class="hljs-preprocessor">.dl</span><span class="hljs-preprocessor">.sourceforge</span><span class="hljs-preprocessor">.net</span>/project/amoeba/Amoeba%<span class="hljs-number">20</span>for%<span class="hljs-number">20</span>mysql/<span class="hljs-number">2.2</span><span class="hljs-preprocessor">.x</span>/amoeba-mysql-binary-<span class="hljs-number">2.2</span><span class="hljs-number">.0</span><span class="hljs-preprocessor">.tar</span><span class="hljs-preprocessor">.gz</span>
+
+mkdir /opt/amoeba/
+tar -zxvf amoeba-mysql-binary-<span class="hljs-number">2.2</span><span class="hljs-number">.0</span><span class="hljs-preprocessor">.tar</span><span class="hljs-preprocessor">.gz</span> -C /opt/amoeba/ 
+cd /opt/amoeba/</code></pre>
+<h1 id="配置">配置</h1>
+<pre class="prettyprint"><code class=" hljs vbnet">./bin/amoeba
+
+The stack size specified <span class="hljs-keyword">is</span> too small, Specify at least <span class="hljs-number">228</span>k
+<span class="hljs-keyword">Error</span>: Could <span class="hljs-keyword">not</span> create the Java Virtual Machine.
+<span class="hljs-keyword">Error</span>: A fatal exception has occurred. Program will <span class="hljs-keyword">exit</span>
+<span class="hljs-preprocessor">#修改./bin/amoeba的</span>
+DEFAULT_OPTS=<span class="hljs-string">"-server -Xms256m -Xmx256m -Xss128k"</span>
+为
+DEFAULT_OPTS=<span class="hljs-string">"-server -Xms256m -Xmx256m -Xss228k"</span></code></pre>
+<h2 id="修改amoebaxml配置">修改amoeba.xml配置</h2>
+<pre class="prettyprint"><code class=" hljs applescript">vim .conf/amoeba.xml
+...
+&lt;!<span class="hljs-comment">--登陆的用户名--&gt;</span>
+&lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"authenticator"</span>&gt;
+                                &lt;bean <span class="hljs-type">class</span>=<span class="hljs-string">"com.meidusa.amoeba.mysql.server.MysqlClientAuthenticator"</span>&gt;
+
+                                        &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"user"</span>&gt;root&lt;/<span class="hljs-keyword">property</span>&gt;
+
+                                        &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"password"</span>&gt;<span class="hljs-number">123123</span>&lt;/<span class="hljs-keyword">property</span>&gt;
+
+                                        &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"filter"</span>&gt;
+                                                &lt;bean <span class="hljs-type">class</span>=<span class="hljs-string">"com.meidusa.amoeba.server.IPAccessController"</span>&gt;
+                                                        &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"ipFile"</span>&gt;${amoeba.home}/conf/access_list.conf&lt;/<span class="hljs-keyword">property</span>&gt;
+                                                &lt;/bean&gt;
+                                        &lt;/<span class="hljs-keyword">property</span>&gt;
+                                &lt;/bean&gt;
+                        &lt;/<span class="hljs-keyword">property</span>&gt;
+
+ ...
+ &lt;queryRouter <span class="hljs-type">class</span>=<span class="hljs-string">"com.meidusa.amoeba.mysql.parser.MysqlQueryRouter"</span>&gt;
+                &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"ruleLoader"</span>&gt;
+                        &lt;bean <span class="hljs-type">class</span>=<span class="hljs-string">"com.meidusa.amoeba.route.TableRuleFileLoader"</span>&gt;
+                                &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"ruleFile"</span>&gt;${amoeba.home}/conf/rule.xml&lt;/<span class="hljs-keyword">property</span>&gt;
+                                &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"functionFile"</span>&gt;${amoeba.home}/conf/ruleFunctionMap.xml&lt;/<span class="hljs-keyword">property</span>&gt;
+                        &lt;/bean&gt;
+                &lt;/<span class="hljs-keyword">property</span>&gt;
+                &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"sqlFunctionFile"</span>&gt;${amoeba.home}/conf/functionMap.xml&lt;/<span class="hljs-keyword">property</span>&gt;
+                &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"LRUMapSize"</span>&gt;<span class="hljs-number">1500</span>&lt;/<span class="hljs-keyword">property</span>&gt;
+                &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"defaultPool"</span>&gt;master1&lt;/<span class="hljs-keyword">property</span>&gt;
+
+                &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"writePool"</span>&gt;multWritePool&lt;/<span class="hljs-keyword">property</span>&gt;
+                &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"readPool"</span>&gt;multReadPool&lt;/<span class="hljs-keyword">property</span>&gt;
+                &lt;<span class="hljs-keyword">property</span> <span class="hljs-property">name</span>=<span class="hljs-string">"needParse"</span>&gt;<span class="hljs-constant">true</span>&lt;/<span class="hljs-keyword">property</span>&gt;
+        &lt;/queryRouter&gt;
+...</code></pre>
+<h2 id="修改dbserversxml-配置">修改dbServers.xml 配置</h2>
+<pre class="prettyprint"><code class=" hljs xml">...
+<span class="hljs-comment">&lt;!--连接真实数据库的用户和密码--&gt;</span>
+<span class="hljs-comment">&lt;!-- mysql port --&gt;</span>
+                        <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"port"</span>&gt;</span>3306<span class="hljs-tag">&lt;/<span class="hljs-title">property</span>&gt;</span>
+
+                        <span class="hljs-comment">&lt;!-- mysql schema --&gt;</span>
+                        <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"schema"</span>&gt;</span>test<span class="hljs-tag">&lt;/<span class="hljs-title">property</span>&gt;</span>
+
+                        <span class="hljs-comment">&lt;!-- mysql user --&gt;</span>
+                        <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"user"</span>&gt;</span>root<span class="hljs-tag">&lt;/<span class="hljs-title">property</span>&gt;</span>
+
+                        <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"password"</span>&gt;</span>123123<span class="hljs-tag">&lt;/<span class="hljs-title">property</span>&gt;</span>
+...
+<span class="hljs-comment">&lt;!--master为读写的mysql，slave1为只读的mysql --&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">dbServer</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"master1"</span>  <span class="hljs-attribute">parent</span>=<span class="hljs-value">"abstractServer"</span>&gt;</span>
+                <span class="hljs-tag">&lt;<span class="hljs-title">factoryConfig</span>&gt;</span>
+                        <span class="hljs-comment">&lt;!-- mysql ip --&gt;</span>
+                        <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"ipAddress"</span>&gt;</span>192.168.42.28<span class="hljs-tag">&lt;/<span class="hljs-title">property</span>&gt;</span>
+                <span class="hljs-tag">&lt;/<span class="hljs-title">factoryConfig</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-title">dbServer</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-title">dbServer</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"master2"</span>  <span class="hljs-attribute">parent</span>=<span class="hljs-value">"abstractServer"</span>&gt;</span>
+                <span class="hljs-tag">&lt;<span class="hljs-title">factoryConfig</span>&gt;</span>
+                        <span class="hljs-comment">&lt;!-- mysql ip --&gt;</span>
+                        <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"ipAddress"</span>&gt;</span>192.168.42.29<span class="hljs-tag">&lt;/<span class="hljs-title">property</span>&gt;</span>
+                <span class="hljs-tag">&lt;/<span class="hljs-title">factoryConfig</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-title">dbServer</span>&gt;</span>
+
+        <span class="hljs-tag">&lt;<span class="hljs-title">dbServer</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"slave1"</span>  <span class="hljs-attribute">parent</span>=<span class="hljs-value">"abstractServer"</span>&gt;</span>
+                <span class="hljs-tag">&lt;<span class="hljs-title">factoryConfig</span>&gt;</span>
+                        <span class="hljs-comment">&lt;!-- mysql ip --&gt;</span>
+                        <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"ipAddress"</span>&gt;</span>192.168.42.33<span class="hljs-tag">&lt;/<span class="hljs-title">property</span>&gt;</span>
+                <span class="hljs-tag">&lt;/<span class="hljs-title">factoryConfig</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-title">dbServer</span>&gt;</span>
+        <span class="hljs-comment">&lt;!-- 读的Pool --&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-title">dbServer</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"multReadPool"</span> <span class="hljs-attribute">virtual</span>=<span class="hljs-value">"true"</span>&gt;</span>
+                <span class="hljs-tag">&lt;<span class="hljs-title">poolConfig</span> <span class="hljs-attribute">class</span>=<span class="hljs-value">"com.meidusa.amoeba.server.MultipleServerPool"</span>&gt;</span>
+                        <span class="hljs-comment">&lt;!-- Load balancing strategy: 1=ROUNDROBIN , 2=WEIGHTBASED , 3=HA--&gt;</span>
+                        <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"loadbalance"</span>&gt;</span>1<span class="hljs-tag">&lt;/<span class="hljs-title">property</span>&gt;</span>
+
+                        <span class="hljs-comment">&lt;!-- Separated by commas,such as: server1,server2,server1 --&gt;</span>
+                        <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"poolNames"</span>&gt;</span>slave1,slave1,master1,master2<span class="hljs-tag">&lt;/<span class="hljs-title">property</span>&gt;</span>
+                <span class="hljs-tag">&lt;/<span class="hljs-title">poolConfig</span>&gt;</span>
+                <span class="hljs-tag">&lt;/<span class="hljs-title">dbServer</span>&gt;</span>
+        <span class="hljs-comment">&lt;!-- 写的Pool  --&gt;</span>
+                 <span class="hljs-tag">&lt;<span class="hljs-title">dbServer</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"multWritePool"</span> <span class="hljs-attribute">virtual</span>=<span class="hljs-value">"true"</span>&gt;</span>
+                <span class="hljs-tag">&lt;<span class="hljs-title">poolConfig</span> <span class="hljs-attribute">class</span>=<span class="hljs-value">"com.meidusa.amoeba.server.MultipleServerPool"</span>&gt;</span>
+                        <span class="hljs-comment">&lt;!-- Load balancing strategy: 1=ROUNDROBIN , 2=WEIGHTBASED , 3=HA--&gt;</span>
+                        <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"loadbalance"</span>&gt;</span>1<span class="hljs-tag">&lt;/<span class="hljs-title">property</span>&gt;</span>
+
+                        <span class="hljs-comment">&lt;!-- Separated by commas,such as: server1,server2,server1 --&gt;</span>
+                        <span class="hljs-tag">&lt;<span class="hljs-title">property</span> <span class="hljs-attribute">name</span>=<span class="hljs-value">"poolNames"</span>&gt;</span>master1,master2<span class="hljs-tag">&lt;/<span class="hljs-title">property</span>&gt;</span>
+                <span class="hljs-tag">&lt;/<span class="hljs-title">poolConfig</span>&gt;</span>
+        <span class="hljs-tag">&lt;/<span class="hljs-title">dbServer</span>&gt;</span>
+...</code></pre>
+<h1 id="启动">启动</h1>
+<pre class="prettyprint"><code class=" hljs sql">./bin/amoeba <span class="hljs-operator"><span class="hljs-keyword">start</span></span></code></pre>
+<h1 id="连接">连接</h1>
+<pre class="prettyprint"><code class=" hljs lasso">mysql <span class="hljs-attribute">-uroot</span> <span class="hljs-attribute">-p123123</span> <span class="hljs-attribute">-P</span> <span class="hljs-number">8066</span> <span class="hljs-attribute">-h0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span> </code></pre></div>
+
+</div>

@@ -1,0 +1,106 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="server-结构">Server  结构</h1>
+<p><strong>结构参照hadoop RPC结构，自己造轮子</strong> <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160327184505955" title=""/></br></p>
+<h1 id="传输的数据结构">传输的数据结构</h1>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160327182452740" title=""/></p>
+<p>1,abstract class Server  接收并且响应客户端请求，把请求数据封装成Call 交给之类实现 <br>
+2,客户端首次连接必须发送头”HEADER”+version+ServiceClass(Server 实现的之类)+auth <br>
+*|——–4byte——-|———-3byte—————–| <br>
+*|———————-|—-8 bit—-8 bit—–8bit——| <br>
+*|——–HEADER—–|–version ServiceClass auth—| <br>
+3，call结构</br></br></br></br></br></p>
+<p>*|——–4byte———-|———————-dataLength———————————| <br>
+*|————————| –len(1~4byte)-|—data—— |–len(1~4byte)-|—data——–| <br>
+*|————————| –RpcRequestHeaderProto– |–？RequestProto—————| <br>
+*|—-请求数据的长度—-|—————具体的请求数据————————————|</br></br></br></p>
+<h2 id="server处理client-数据java">Server处理client 数据（java）</h2>
+<ol>
+<li>首先读取4个字节的看看是不是RPC请求</li>
+<li>然后读取3个字节比对版本，Server具体的实现类，认证信息</li>
+<li>循环开始读取call <br>
+ 1.读取4个字节（一个Int）表示当前<strong>call的数据长度</strong> <br>
+ 2，读取<strong>call的数据长度</strong>的数据 <br>
+ 3，封装成Call对象，放入Call队列</br></br></br></li>
+</ol>
+<h2 id="处理call队列">处理Call队列</h2>
+<ol>
+<li>循环读取call <br>
+<ol><li>根据<strong>varint解压缩</strong>读取RpcRequestHeader的长度</li>
+<li>通过长度读取数据</li>
+<li>通过RpcRequestHeaderProto.parseFrom 解析出RequestHeader</li>
+<li>通过RequestHeader的protoName+version 找到具体处理类(BlockingService service)</li>
+<li>MethodDescriptor method = service.getDescriptorForType().findMethodByName(methodName); 找到执行的方法</li>
+<li>Message requestPrototype = service.getRequestPrototype(method);找到请求参数类型</li>
+<li>根据<strong>varint解压缩</strong>读取<strong>request的长度</strong></li>
+<li>通过长度读取<strong>数据</strong></li>
+<li>requestPrototype.newBuilderForType().mergeFrom(<strong>数据</strong>).build()</li>
+<li>Message result= service.callBlockingMethod(method, null,requestPrototype.newBuilderForType().mergeFrom(request.theRequestRead).build()); 获取返回对象</li>
+<li>生成返回头（RpcResponseHeaderProto）</li>
+<li>把RpcResponseHeaderProto+result(同样写入总长度+header的长度+header+response的长度+response)放入响应队列</li></ol></br></li>
+</ol>
+<h2 id="响应队列">响应队列</h2>
+<ol>
+<li>读取数据返回给客户端</li>
+</ol>
+<h2 id="客户端发送数据">客户端发送数据</h2>
+<ol>
+<li>c = ClientProtocolService_Stub(service.RpcChannel) service.RpcChannel表示继承service.RpcChannel的实例，重写CallMethod</li>
+<li>c.echo 实际就是调用service.RpcChanneld 的CallMethod方法，参数为 EchoRequestProto</li>
+<li>根据方法产生RpcRequestHeaderProto实例</li>
+<li>把（总数据长度+RpcRequestHeaderProto长度的varint压缩+RpcRequestHeaderProto.SerializeToString+EchoRequestProto长度的varint压缩+EchoRequestProto.SerializeToString）发送到服务器</li>
+<li>等待数据返回， <br>
+ 1.读取总返回的数据长度，固定4个字节 <br>
+ 2.根据长度读取数据 <br>
+<ol><li>根据<strong>varint解压缩</strong>读取RpcResponseHeaderProto的长度</li>
+<li>读取RpcResponseHeaderProto数据，responseHeader.ParseFromString解析数据</li>
+<li>判断是否成功，失败显示错误信息退出</li>
+<li>如果成功，根据<strong>varint解压缩</strong>读取EchoResponseProto的长度和数据</li></ol></br></br></br></li>
+</ol>
+<h1 id="代码">代码</h1>
+<p><strong>服务器是java（因为python没找到select.select唤醒的方法所以使用java写），客户端是python</strong> <br>
+<a href="https://github.com/neo-hu/RPC">https://github.com/neo-hu/RPC</a></br></p>
+<h1 id="注意">注意</h1>
+<h2 id="数据的长度">数据的长度</h2>
+<p>java的writeDelimitedTo写入的数据会先写入这个Msg的数据的长度，是1~4字节的数据 <br>
+如果java解析 parseDelimitedFrom， <br>
+python没这方法（也许是我没找到）需要直接先写入长度，在写入数据</br></br></p>
+<h3 id="varint">varint</h3>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">write_raw_varint</span><span class="hljs-params">(value)</span>:</span>
+    <span class="hljs-string">"""
+    varint压缩
+    """</span>
+    local_chr = _PY2 <span class="hljs-keyword">and</span> chr <span class="hljs-keyword">or</span> (<span class="hljs-keyword">lambda</span> x: bytes((x,)))
+    pieces = []
+    write = <span class="hljs-keyword">lambda</span> x: pieces.append(local_chr(x))
+    bits = value &amp; <span class="hljs-number">0x7f</span>
+    value &gt;&gt;= <span class="hljs-number">7</span>
+    <span class="hljs-keyword">while</span> value:
+        write(<span class="hljs-number">0x80</span> | bits)
+        bits = value &amp; <span class="hljs-number">0x7f</span>
+        value &gt;&gt;= <span class="hljs-number">7</span>
+    write(bits)
+    <span class="hljs-keyword">return</span> <span class="hljs-string">''</span>.join(pieces)
+
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">read_raw_varint</span><span class="hljs-params">(buff)</span>:</span>
+    <span class="hljs-string">"""
+        varint解压缩，每次读取8为，如果第一位是1表示还有数据,把后7位保存为tmp，直到读取到第一位为0的，然后把所有的tmp后7连接起来，倒序连接
+    """</span>
+    s1 = struct.Struct(<span class="hljs-string">"!b"</span>)
+    shift = <span class="hljs-number">0</span>
+    result = <span class="hljs-number">0</span>
+    index = <span class="hljs-number">0</span>
+    <span class="hljs-keyword">while</span> <span class="hljs-keyword">True</span>:
+        tmp = buff[index]
+        index += <span class="hljs-number">1</span>
+        b, = s1.unpack(tmp)
+        result |= (b &amp; <span class="hljs-number">0x7f</span>) &lt;&lt; shift
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> (b &amp; <span class="hljs-number">0x80</span>):
+            <span class="hljs-keyword">return</span> index, result
+        shift += <span class="hljs-number">7</span>
+        <span class="hljs-keyword">if</span> shift &gt;= <span class="hljs-number">64</span>:
+            <span class="hljs-keyword">raise</span> Exception(<span class="hljs-string">"太多的字节"</span>)</code></pre>
+<p><img alt="" src="http://ip8.me:8888/home/api/public/referer.py" title=""/></p></div>
+
+</div>

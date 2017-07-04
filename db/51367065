@@ -1,0 +1,44 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="classmethod">classmethod</h1>
+<pre class="prettyprint"><code class=" hljs python">
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">my_classmethod</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__get__</span><span class="hljs-params">(self, obj, type=None)</span>:</span>
+        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">wrapper</span><span class="hljs-params">(*args, **kwargs)</span>:</span>
+            <span class="hljs-keyword">return</span> self.function(type, *args, **kwargs)
+        <span class="hljs-keyword">return</span> wrapper
+    <span class="hljs-comment">#更简单的写法</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__get__</span><span class="hljs-params">(self, obj, type=None)</span>:</span>
+        <span class="hljs-keyword">return</span> partial(self.function, type) <span class="hljs-comment">#partial的作用就是，把一个函数的某些参数给固定住（也就是设置默认值），返回一个新的函数</span>
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, function)</span>:</span>
+        self.function = function
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Class2</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-decorator">@my_classmethod</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_user</span><span class="hljs-params">(cls, x)</span>:</span>
+        <span class="hljs-keyword">return</span> x, <span class="hljs-string">"get_user"</span>
+
+<span class="hljs-keyword">print</span> Class2.get_user(<span class="hljs-string">"###"</span>)
+<span class="hljs-comment">#==========</span>
+(<span class="hljs-string">'###'</span>, <span class="hljs-string">'get_user'</span>)</code></pre>
+<h1 id="staticmethod">staticmethod</h1>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">my_staticmethod</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__get__</span><span class="hljs-params">(self, obj, type=None)</span>:</span>
+        <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">wrapper</span><span class="hljs-params">(*args, **kwargs)</span>:</span>
+            <span class="hljs-keyword">return</span> self.function(*args, **kwargs)
+        <span class="hljs-keyword">return</span> wrapper
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, function)</span>:</span>
+        self.function = function
+
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Class2</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-decorator">@my_staticmethod</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_user</span><span class="hljs-params">(x)</span>:</span>
+        <span class="hljs-keyword">return</span> x, <span class="hljs-string">"get_user"</span>
+
+<span class="hljs-keyword">print</span> Class2.get_user(<span class="hljs-string">"###"</span>)
+<span class="hljs-comment">#==========</span>
+(<span class="hljs-string">'###'</span>, <span class="hljs-string">'get_user'</span>)</code></pre></div>
+
+</div>

@@ -1,0 +1,250 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h2 id="环境">环境：</h2>
+<p>Ubuntu 14.04(zabbix_server) <br>
+docker Ubuntu 14.04(zabbix_agent)*3</br></p>
+<h2 id="ubuntu下安装zabbix">Ubuntu下安装Zabbix</h2>
+<h3 id="首先安装php5mysqlapache-or-nginx">首先安装php5,mysql,apache or nginx</h3>
+<pre class="prettyprint"><code class=" hljs lasso">sudo apt<span class="hljs-attribute">-get</span> install php5
+
+sudo apt<span class="hljs-attribute">-get</span> install mysql<span class="hljs-attribute">-server</span>
+
+sudo apt<span class="hljs-attribute">-get</span> install php5<span class="hljs-attribute">-mysql</span></code></pre>
+<h3 id="zabbix安装">Zabbix安装</h3>
+<pre class="prettyprint"><code class=" hljs lasso"><span class="hljs-comment">//我使用的是阿里的源,使用官方的源有可能没这软件</span>
+sudo apt<span class="hljs-attribute">-get</span> install zabbix<span class="hljs-attribute">-server</span><span class="hljs-attribute">-mysql</span> zabbix<span class="hljs-attribute">-frontend</span><span class="hljs-attribute">-php</span></code></pre>
+<h3 id="配置数据库">配置数据库</h3>
+<pre class="prettyprint"><code class=" hljs sql">root@zabbix:/# mysql -uroot -p123123 -e "<span class="hljs-operator"><span class="hljs-keyword">create</span> <span class="hljs-keyword">database</span> zabbix <span class="hljs-keyword">character</span> <span class="hljs-keyword">set</span> utf8;</span> "
+root@zabbix:/# mysql -uroot -p123123 -e "<span class="hljs-operator"><span class="hljs-keyword">create</span> <span class="hljs-keyword">user</span> <span class="hljs-string">'zabbix'</span>@<span class="hljs-string">'%'</span> identified <span class="hljs-keyword">by</span> <span class="hljs-string">'zabbix'</span>;</span> "
+root@zabbix:/# mysql -uroot -p123123 -e "<span class="hljs-operator"><span class="hljs-keyword">grant</span> <span class="hljs-keyword">all</span> <span class="hljs-keyword">on</span> zabbix.* <span class="hljs-keyword">to</span> <span class="hljs-string">'zabbix'</span>@<span class="hljs-string">'%'</span> identified <span class="hljs-keyword">by</span> <span class="hljs-string">'zabbix'</span>;</span>"        </code></pre>
+<p>查看一下安装的位置</p>
+<pre class="prettyprint"><code class=" hljs avrasm">root@zabbix:/<span class="hljs-preprocessor"># dpkg -L zabbix-server-mysql</span>
+/.
+/var
+/var/log
+/var/log/zabbix-server
+/usr
+/usr/sbin
+/usr/sbin/zabbix_server
+/usr/share
+/usr/share/man
+/usr/share/man/man8
+/usr/share/man/man8/zabbix_server<span class="hljs-number">.8</span><span class="hljs-preprocessor">.gz</span>
+/usr/share/man/man1
+/usr/share/man/man1/zabbix_get<span class="hljs-number">.1</span><span class="hljs-preprocessor">.gz</span>
+/usr/share/zabbix-server-mysql
+/usr/share/zabbix-server-mysql/images<span class="hljs-preprocessor">.sql</span><span class="hljs-preprocessor">.gz</span>
+/usr/share/zabbix-server-mysql/data<span class="hljs-preprocessor">.sql</span><span class="hljs-preprocessor">.gz</span>
+/usr/share/zabbix-server-mysql/zabbix_server<span class="hljs-preprocessor">.conf</span>
+/usr/share/zabbix-server-mysql/schema<span class="hljs-preprocessor">.sql</span><span class="hljs-preprocessor">.gz</span>
+/usr/share/doc
+/usr/share/doc/zabbix-server-mysql
+/usr/share/doc/zabbix-server-mysql/NEWS<span class="hljs-preprocessor">.Debian</span><span class="hljs-preprocessor">.gz</span>
+/usr/share/doc/zabbix-server-mysql/copyright
+/usr/share/doc/zabbix-server-mysql/changelog<span class="hljs-preprocessor">.Debian</span><span class="hljs-preprocessor">.gz</span>
+/usr/share/doc/zabbix-server-mysql/README<span class="hljs-preprocessor">.Debian</span>
+/usr/bin
+/usr/bin/zabbix_get
+/etc
+/etc/default
+/etc/default/zabbix-server
+/etc/zabbix
+/etc/zabbix/alert<span class="hljs-preprocessor">.d</span>
+/etc/init<span class="hljs-preprocessor">.d</span>
+/etc/init<span class="hljs-preprocessor">.d</span>/zabbix-server
+/etc/logrotate<span class="hljs-preprocessor">.d</span>
+/etc/logrotate<span class="hljs-preprocessor">.d</span>/zabbix-server-mysql
+/etc/init
+/etc/init/zabbix-server<span class="hljs-preprocessor">.conf</span></code></pre>
+<p>这3个压缩文件需要解压后导入mysql</p>
+<pre class="prettyprint"><code class=" hljs lasso">zcat /usr/share/zabbix<span class="hljs-attribute">-server</span><span class="hljs-attribute">-mysql</span><span class="hljs-subst">/</span>{schema,images,<span class="hljs-built_in">data</span>}<span class="hljs-built_in">.</span>sql<span class="hljs-built_in">.</span>gz <span class="hljs-subst">|</span> mysql <span class="hljs-attribute">-uzabbix</span> <span class="hljs-attribute">-pzabbix</span> zabbix </code></pre>
+<p>修改zabbix配置文件</p>
+<pre class="prettyprint"><code class=" hljs r">vim.tiny /etc/zabbix/zabbix_server.conf 
+
+<span class="hljs-keyword">...</span>
+DBName=zabbix
+
+<span class="hljs-comment">### Option: DBSchema</span>
+<span class="hljs-comment">#       Schema name. Used for IBM DB2.</span>
+<span class="hljs-comment">#</span>
+<span class="hljs-comment"># Mandatory: no</span>
+<span class="hljs-comment"># Default:</span>
+<span class="hljs-comment"># DBSchema=</span>
+
+<span class="hljs-comment">### Option: DBUser</span>
+<span class="hljs-comment">#       Database user. Ignored for SQLite.</span>
+<span class="hljs-comment">#</span>
+<span class="hljs-comment"># Mandatory: no</span>
+<span class="hljs-comment"># Default:</span>
+<span class="hljs-comment"># DBUser=</span>
+
+DBUser=zabbix
+
+<span class="hljs-comment">### Option: DBPassword</span>
+<span class="hljs-comment">#       Database password. Ignored for SQLite.</span>
+<span class="hljs-comment">#       Comment this line if no password is used.</span>
+<span class="hljs-comment">#</span>
+<span class="hljs-comment"># Mandatory: no</span>
+<span class="hljs-comment"># Default:</span>
+DBPassword=zabbix
+
+<span class="hljs-keyword">...</span></code></pre>
+<h3 id="启动服务">启动服务</h3>
+<pre class="prettyprint"><code class=" hljs sql">
+vim.tiny /etc/default/zabbix-server
+
+# defaults file for zabbix-server-mysql
+
+# <span class="hljs-operator"><span class="hljs-keyword">Start</span> the Zabbix server <span class="hljs-keyword">from</span> the init.d script?
+# (Possible <span class="hljs-keyword">values</span>: <span class="hljs-string">"yes"</span> <span class="hljs-keyword">or</span> <span class="hljs-string">"no"</span>)
+#
+# This <span class="hljs-keyword">is</span> <span class="hljs-keyword">by</span> <span class="hljs-keyword">default</span> <span class="hljs-keyword">set</span> <span class="hljs-keyword">to</span> <span class="hljs-string">"no"</span> because a MySQL <span class="hljs-keyword">database</span> needs <span class="hljs-keyword">to</span> be prepared
+# <span class="hljs-keyword">and</span> configured <span class="hljs-keyword">before</span> you can <span class="hljs-keyword">start</span> the Zabbix server <span class="hljs-keyword">for</span> the <span class="hljs-keyword">first</span> <span class="hljs-keyword">time</span>.
+#
+# Instructions <span class="hljs-keyword">on</span> how <span class="hljs-keyword">to</span> <span class="hljs-keyword">set</span> up the <span class="hljs-keyword">database</span> can be <span class="hljs-keyword">found</span> <span class="hljs-keyword">in</span>
+# /usr/share/doc/zabbix-server-mysql/README.Debian
+<span class="hljs-keyword">START</span>=<span class="hljs-keyword">no</span> #默认是<span class="hljs-keyword">on</span>,改成yes
+
+# <span class="hljs-keyword">Absolute</span> path <span class="hljs-keyword">to</span> the configuration file
+CONFIG_FILE=<span class="hljs-string">"/etc/zabbix/zabbix_server.conf"</span></span></code></pre>
+<pre class="prettyprint"><code class=" hljs sql">service zabbix-server <span class="hljs-operator"><span class="hljs-keyword">start</span></span></code></pre>
+<h3 id="安装zabbix-web">安装zabbix web</h3>
+<p><em>我这已经安装nginx就用nginx吧</em></p>
+<pre class="prettyprint"><code class=" hljs avrasm">
+vim<span class="hljs-preprocessor">.tiny</span> /etc/nginx/sites-available/zabbix</code></pre>
+<pre class="prettyprint"><code class=" hljs perl">server {
+        <span class="hljs-keyword">listen</span> <span class="hljs-number">80</span>;
+        root /usr/share/zabbix/;
+        <span class="hljs-keyword">index</span> <span class="hljs-keyword">index</span>.php <span class="hljs-keyword">index</span>.html <span class="hljs-keyword">index</span>.htm;
+
+        location / {
+                try_files <span class="hljs-variable">$uri</span> <span class="hljs-variable">$uri</span>/ =<span class="hljs-number">404</span>;
+        }
+
+
+        error_page <span class="hljs-number">404</span> /<span class="hljs-number">404</span>.html;
+        access_log /var/<span class="hljs-keyword">log</span>/nginx/php_access.<span class="hljs-keyword">log</span>;
+        error_log /var/<span class="hljs-keyword">log</span>/nginx/php_error.<span class="hljs-keyword">log</span>;
+        location ~ \.php$ {
+                fastcgi_split_path_info ^(.+\.php)(<span class="hljs-regexp">/.+)$;
+                fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                fastcgi_pass 127.0.0.1:9000;
+                fastcgi_index index.php;
+                include fastcgi_params;
+        }
+
+}</span></code></pre>
+<pre class="prettyprint"><code class=" hljs lasso">rm /etc/nginx/sites<span class="hljs-attribute">-enabled</span>/default 
+ln <span class="hljs-attribute">-s</span> /etc/nginx/sites<span class="hljs-attribute">-available</span>/zabbix /etc/nginx/sites<span class="hljs-attribute">-enabled</span><span class="hljs-subst">/</span>   
+
+service nginx restart</code></pre>
+<p>访问 http://服务器地址或域名/</p>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218165327770" title=""> <br>
+<strong>点击next</strong> </br></img></p>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218165430208" title=""/></p>
+<p>这里需要修改php.ini配置</p>
+<pre class="prettyprint"><code class=" hljs asciidoc">vim /etc/php5/fpm/php.ini #我使用的是nginx +php5-fpm
+
+<span class="hljs-code">......
+; http://php.net/post-max-size
+post_max_size = 16M
+.....</span>
+; Note: This directive is hardcoded to 0 for the CLI SAPI
+max<span class="hljs-emphasis">_execution_</span>time = 300
+
+; Maximum amount of time each script may spend parsing request data. It's a good
+; idea to limit this time on productions servers in order to eliminate unexpectedly
+; long running scripts.
+; Note: This directive is hardcoded to -1 for the CLI SAPI
+; Default Value: -1 (Unlimited)
+; Development Value: 60 (60 seconds)
+; Production Value: 60 (60 seconds)
+; http://php.net/max-input-time
+max<span class="hljs-emphasis">_input_</span>time = 300
+<span class="hljs-code">......
+[Date]
+; Defines the default timezone used by the date functions
+; http://php.net/date.timezone
+date.timezone = Asia/Shanghai
+
+; http://php.net/date.default-latitude
+;date.default_latitude = 31.7667
+.....</span></code></pre>
+<p>重启php5-fpm,然后刷新页面</p>
+<pre class="prettyprint"><code class=" hljs lasso">service php5<span class="hljs-attribute">-fpm</span> restart </code></pre>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218170159422" title=""/></p>
+<p>都已经OK，下一步</p>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218170331252" title=""/></p>
+<p>配置数据库信息然后测试一下，在下一步 <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218170437900" title=""/></br></p>
+<p>直接下一步 <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218170515963" title=""> <br>
+核对一下信息，没问题就下一步</br></img></br></p>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218170608182" title=""/></p>
+<p>没权限创建/etc/zabbix/zabbix.conf.php <br>
+下载文件手动复制到/etc/zabbix/ <br>
+然后点击Retry 在点击Finish web就安装完成的</br></br></p>
+<p>管理员是admin  zabbix <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218171709842" title=""> <br>
+在右上角的profile可以改成中文，</br></img></br></p>
+<p>如果服务器没安装中文 <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218171905506" title=""/></br></p>
+<pre class="prettyprint"><code class=" hljs avrasm">locale-gen zh_CN<span class="hljs-preprocessor">.UTF</span>-<span class="hljs-number">8</span></code></pre>
+<p>刷新页面就有了 <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218172112994" title=""/></br></p>
+<p><strong>可能出现的问题</strong> <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218181503614" title=""> <br>
+zabbix 服务没启动，根据日志找原因</br></img></br></p>
+<pre class="prettyprint"><code class=" hljs lasso">/<span class="hljs-built_in">var</span>/<span class="hljs-keyword">log</span>/zabbix<span class="hljs-attribute">-server</span>/zabbix_server<span class="hljs-built_in">.</span><span class="hljs-keyword">log</span></code></pre>
+<h3 id="安装zabbix客户端">安装zabbix客户端</h3>
+<h4 id="监控zabbix-服务端">监控zabbix 服务端</h4>
+<pre class="prettyprint"><code class=" hljs lasso">apt<span class="hljs-attribute">-get</span> install zabbix<span class="hljs-attribute">-agent</span>
+service zabbix<span class="hljs-attribute">-agent</span> start</code></pre>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218172859503" title=""> <br>
+点击<strong>未受监测</strong> 启动监控</br></img></p>
+<h4 id="客户端安装zabbix-agent">客户端安装zabbix agent</h4>
+<p>在需要监控的主机上安装zabbix-agent</p>
+<pre class="prettyprint"><code class=" hljs lasso">apt<span class="hljs-attribute">-get</span> install zabbix<span class="hljs-attribute">-agent</span></code></pre>
+<pre class="prettyprint"><code class=" hljs asciidoc">vim.tiny /etc/zabbix/zabbix<span class="hljs-emphasis">_agentd.conf
+
+</span><span class="hljs-code">.....
+Server=zabbix 服务端IP
+ServerActive=zabbix 服务端IP
+.....</span>
+# 需要和主机名称一直（可能遇到的问题）
+Hostname=Zabbix server</code></pre>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218173853968" title=""/></p>
+<pre class="prettyprint"><code class=" hljs sql">service zabbix-agent <span class="hljs-operator"><span class="hljs-keyword">start</span></span></code></pre>
+<p>然后在web页面上 组态&gt;主机》添加主机</p>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218174151379" title=""/></p>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218174310477" title=""> <br>
+比如我这台主机是做web服务器，可以添加http的监控， <br>
+然后存档 <br>
+<strong>可能出现的问题</strong> <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218181936992" title=""/></br></br></br></br></img></p>
+<h3 id="报警通知">报警通知</h3>
+<p>创建脚本通知 <br>
+管理&gt;示警媒介类型&gt;创建媒体类型 <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218174851202" title=""/></br></br></p>
+<p>默认的脚本放在 /etc/zabbix/alert.d/目录一下，需要有可执行权限 <br>
+客户端没连接上，查看日志 /var/log/zabbix-agent/zabbix_agentd.log</br></p>
+<pre class="prettyprint"><code class=" hljs bash">vim.tiny  /etc/zabbix/alert.d/test_script.sh
+
+<span class="hljs-shebang">#!/bin/sh</span>
+<span class="hljs-comment"># 可以在这里发邮件或者其他操作</span>
+<span class="hljs-built_in">echo</span> $* &gt;&gt; /tmp/za.log</code></pre>
+<p>选择用户 <br>
+管理&gt;用户&gt;Admin&gt;示警媒介 <br>
+<img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218175436763" title=""/></br></br></p>
+<h3 id="自定义监控">自定义监控</h3>
+<p>创建监控80端口的监控 <br>
+组态&gt;主机&gt;docker2&gt;项目 &gt;创建监控项</br></p>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218180236375" title=""/></p>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218180645037" title=""/></p>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218180728502" title=""> <br>
+组态&gt;主机&gt;docker2&gt;触发器 &gt;创建触发器</br></img></p>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218180941222" title=""/></p>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160218181056574" title=""> <br>
+就可以测试一下停止http服务，首页上会出现警告 <br>
+查看/tmp/za.log </br></br></img></p></div>
+
+</div>

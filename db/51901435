@@ -1,0 +1,34 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><p>启动一个容器</p>
+<pre class="prettyprint"><code class=" hljs livecodeserver">docker run -<span class="hljs-keyword">it</span> ubuntu:ssh /bin/bash
+
+➜  ubuntu64 docker ps 
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+<span class="hljs-number">9</span>fb1a5e9da0b        ubuntu:ssh          <span class="hljs-string">"/bin/bash"</span>         <span class="hljs-number">13</span> <span class="hljs-built_in">seconds</span> ago      Up <span class="hljs-number">12</span> <span class="hljs-built_in">seconds</span>                           distracted_banach  </code></pre>
+<p>停止容器</p>
+<pre class="prettyprint"><code class=" hljs vbnet">docker <span class="hljs-keyword">stop</span> <span class="hljs-number">9</span>fb1a5e9da0b</code></pre>
+<p>例如分配一个1T的磁盘给9fb1a5e9da0b</p>
+<ol>
+<li>创建一个1T的空文件 <code>dd of=data1 seek=1048576 bs=1M count=0</code> <strong>实际没占用真实硬盘空间</strong></li>
+<li>转成块设备,格式化成ext4 <code>mkfs.ext4 -F data1</code></li>
+<li>创建临时挂载目录用作同步9fb1a5e9da0b容器的内容 <br>
+<ol><li><code>mkdir tmp_mount</code></li>
+<li><code>mount data1 tmp_mount</code></li>
+<li><code>rsync -rtv /var/lib/docker/aufs/diff/9fb1a5e9da0b79938073f10ababa1cd59f74d969f0f51819e5bc82b2652bd6df/ tmp_mount</code> <strong>9fb1a5e9da0b…..是容器的ID</strong></li>
+<li><code>umount tmp_mount</code></li>
+<li><code>rm -fr  tmp_mount</code></li></ol></br></li>
+<li><code>rm -fr /var/lib/docker/aufs/diff/9fb1a5e9da0b79938073f10ababa1cd59f74d969f0f51819e5bc82b2652bd6df/</code></li>
+<li><code>mkdir /var/lib/docker/aufs/diff/9fb1a5e9da0b79938073f10ababa1cd59f74d969f0f51819e5bc82b2652bd6df/</code></li>
+<li><code>mount data1 /var/lib/docker/aufs/diff/9fb1a5e9da0b79938073f10ababa1cd59f74d969f0f51819e5bc82b2652bd6df/</code></li>
+<li>重新启动<code>docker start 9fb1a5e9da0b</code></li>
+</ol>
+<pre class="prettyprint"><code class=" hljs lasso">docker attach <span class="hljs-number">9</span>fb1a5e9da0b
+df <span class="hljs-attribute">-h</span>
+Filesystem                                              Size  Used Avail Use<span class="hljs-subst">%</span> Mounted <span class="hljs-keyword">on</span>
+<span class="hljs-literal">none</span>                                                   <span class="hljs-number">1008</span>G   <span class="hljs-number">88</span>M  <span class="hljs-number">957</span>G   <span class="hljs-number">1</span><span class="hljs-subst">%</span> <span class="hljs-subst">/</span>
+tmpfs                                                   <span class="hljs-number">997</span>M     <span class="hljs-number">0</span>  <span class="hljs-number">997</span>M   <span class="hljs-number">0</span><span class="hljs-subst">%</span> /dev
+shm                                                      <span class="hljs-number">64</span>M     <span class="hljs-number">0</span>   <span class="hljs-number">64</span>M   <span class="hljs-number">0</span><span class="hljs-subst">%</span> /dev/shm
+/dev/disk/<span class="hljs-keyword">by</span><span class="hljs-attribute">-uuid</span>/<span class="hljs-number">27</span>a1bcc3<span class="hljs-subst">-</span><span class="hljs-number">27e8</span><span class="hljs-subst">-</span><span class="hljs-number">41</span>f8<span class="hljs-attribute">-bd33</span><span class="hljs-attribute">-c47cf403544c</span>   <span class="hljs-number">16</span>G  <span class="hljs-number">6.3</span>G  <span class="hljs-number">8.7</span>G  <span class="hljs-number">42</span><span class="hljs-subst">%</span> /etc/hosts
+</code></pre></div>
+
+</div>

@@ -1,0 +1,499 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><p>传统的ORM，需要你使用它提供的.query、.filter、.get之类的函数实现查询。而Pony ORM另辟蹊径，直接以generator expression，然后解析AST树的方式构造SQL语句。</p>
+<p>举个例子：有一个Person表，需要查询其中age大于20的person。在Pony ORM里只需要</p>
+<pre class="prettyprint"><code class=" hljs cs"><span class="hljs-keyword">select</span>(p <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> Person <span class="hljs-keyword">if</span> p.age &gt; <span class="hljs-number">20</span>)</code></pre>
+<p>翻成sql就是</p>
+<pre class="prettyprint"><code class=" hljs autohotkey">SELECT <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`i</span>d<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`n</span>ame<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`a</span>ge<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`c</span>lasstype<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`m</span>entor<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`g</span>pa<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`d</span>egree<span class="hljs-escape">`
+</span>FROM <span class="hljs-escape">`p</span>erson<span class="hljs-escape">` </span><span class="hljs-escape">`p</span><span class="hljs-escape">`
+</span>WHERE <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`c</span>lasstype<span class="hljs-escape">` </span>IN ('Student', 'Professor', 'Person')
+  <span class="hljs-literal">AND</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`a</span>ge<span class="hljs-escape">` </span>&gt; <span class="hljs-number">20</span></code></pre>
+<p>够黑魔法吧？够高大上吧？</p>
+<h2 id="创建数据库对象">创建数据库对象</h2>
+<h3 id="创建空的数据库连接">创建空的数据库连接</h3>
+<pre><code>db = Database()
+</code></pre>
+<h3 id="也可以通过参数连接">也可以通过参数连接</h3>
+<p><strong>下面都使用的这个db对象</strong></p>
+<pre class="prettyprint"><code class=" hljs bash">db = Database(<span class="hljs-string">"mysql"</span>, host=<span class="hljs-string">"localhost"</span>,
+            user=<span class="hljs-string">"root"</span>,
+            passwd=<span class="hljs-string">"123123"</span>,
+            db=<span class="hljs-string">"t2"</span>)</code></pre>
+<p><strong>空的连接往往是更方便做后期使用DB()方法。这样你就可以使用不同的数据库进行测试和制作。</strong></p>
+<h3 id="可以连接的数据库">可以连接的数据库：</h3>
+<h4 id="postgres">postgres</h4>
+<pre><code>db.bind('postgres', user='', password='', host='', database='')
+</code></pre>
+<h4 id="sqlite-createdb如果数据库不存在创建数据库文件">sqlite create_db:如果数据库不存在创建数据库文件</h4>
+<pre><code>db.bind('sqlite', 'filename', create_db=True)
+</code></pre>
+<h4 id="mysql">mysql</h4>
+<pre><code>db.bind('mysql', host='', user='', passwd='', db='')
+</code></pre>
+<h4 id="oracle">Oracle</h4>
+<pre><code>db.bind('oracle', 'user/password@dsn')
+</code></pre>
+<h2 id="entity实体-类似mvc里面的model">Entity(实体) 类似mvc里面的model</h2>
+<p><strong>在创建实体实例之前，需要将实体映射到数据库表, 生成映射后，可以通过实体查询数据库并创建新的实例。</strong></p>
+<p><strong>db.Entity 自己定义新的实体必须重db.Entity继承</strong></p>
+<h3 id="属性">属性</h3>
+<pre class="prettyprint"><code class=" hljs haskell"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-type">Customer</span><span class="hljs-container">(<span class="hljs-title">db</span>.<span class="hljs-type">Entity</span>)</span>:
+    name = <span class="hljs-type">Required</span><span class="hljs-container">(<span class="hljs-title">str</span>)</span>
+    picture = <span class="hljs-type">Optional</span><span class="hljs-container">(<span class="hljs-title">buffer</span>)</span>
+
+sql_debug<span class="hljs-container">(<span class="hljs-type">True</span>)</span>  # 显示debug信息<span class="hljs-container">(<span class="hljs-title">sql</span>语句)</span>
+db.generate_mapping<span class="hljs-container">(<span class="hljs-title">create_tables</span>=<span class="hljs-type">True</span>)</span>  # 如果数据库表没有创建表</span></code></pre>
+<p>输出</p>
+<pre class="prettyprint"><code class=" hljs sql">GET CONNECTION FROM THE LOCAL POOL
+<span class="hljs-operator"><span class="hljs-keyword">SET</span> foreign_key_checks = <span class="hljs-number">0</span>
+<span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-string">`customer`</span> (
+  <span class="hljs-string">`id`</span> <span class="hljs-keyword">INTEGER</span> <span class="hljs-keyword">PRIMARY</span> <span class="hljs-keyword">KEY</span> AUTO_INCREMENT,
+  <span class="hljs-string">`name`</span> <span class="hljs-keyword">VARCHAR</span>(<span class="hljs-number">255</span>) <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+  <span class="hljs-string">`picture`</span> LONGBLOB
+)
+
+<span class="hljs-keyword">SELECT</span> <span class="hljs-string">`customer`</span>.<span class="hljs-string">`id`</span>, <span class="hljs-string">`customer`</span>.<span class="hljs-string">`name`</span>, <span class="hljs-string">`customer`</span>.<span class="hljs-string">`picture`</span>
+<span class="hljs-keyword">FROM</span> <span class="hljs-string">`customer`</span> <span class="hljs-string">`customer`</span>
+<span class="hljs-keyword">WHERE</span> <span class="hljs-number">0</span> = <span class="hljs-number">1</span>
+
+<span class="hljs-keyword">COMMIT</span>
+<span class="hljs-keyword">SET</span> foreign_key_checks = <span class="hljs-number">1</span>
+<span class="hljs-keyword">CLOSE</span> <span class="hljs-keyword">CONNECTION</span></span></code></pre>
+<h4 id="属性类型分">属性类型分</h4>
+<ol>
+<li>Required</li>
+<li>Optional</li>
+<li>PrimaryKey</li>
+<li>Set</li>
+</ol>
+<h5 id="required-and-optional">Required and Optional</h5>
+<p>通常实体属性分为Required(必须)和Optional(可选)</p>
+<pre class="prettyprint"><code class=" hljs ini"><span class="hljs-setting">name = <span class="hljs-value">Required(str, unique=<span class="hljs-keyword">True</span>)</span></span>
+<span class="hljs-setting">picture = <span class="hljs-value">Optional(buffer)</span></span></code></pre>
+<h5 id="primarykey主键">PrimaryKey(主键)</h5>
+<p><strong>默认每个实体都有一个主键，默认为添加了id = PrimaryKey(int, auto=True)属性</strong></p>
+<pre class="prettyprint"><code class=" hljs haskell"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-type">Product</span><span class="hljs-container">(<span class="hljs-title">db</span>.<span class="hljs-type">Entity</span>)</span>:
+    name = <span class="hljs-type">Required</span><span class="hljs-container">(<span class="hljs-title">str</span>, <span class="hljs-title">unique</span>=<span class="hljs-type">True</span>)</span>
+    price = <span class="hljs-type">Required</span><span class="hljs-container">(<span class="hljs-type">Decimal</span>)</span>
+    description = <span class="hljs-type">Optional</span><span class="hljs-container">(<span class="hljs-title">str</span>)</span></span></code></pre>
+<p>上面等于下面</p>
+<pre class="prettyprint"><code class=" hljs haskell"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-type">Product</span><span class="hljs-container">(<span class="hljs-title">db</span>.<span class="hljs-type">Entity</span>)</span>:
+    id = <span class="hljs-type">PrimaryKey</span><span class="hljs-container">(<span class="hljs-title">int</span>, <span class="hljs-title">auto</span>=<span class="hljs-type">True</span>)</span>
+    name = <span class="hljs-type">Required</span><span class="hljs-container">(<span class="hljs-title">str</span>, <span class="hljs-title">unique</span>=<span class="hljs-type">True</span>)</span>
+    price = <span class="hljs-type">Required</span><span class="hljs-container">(<span class="hljs-type">Decimal</span>)</span>
+    description = <span class="hljs-type">Optional</span><span class="hljs-container">(<span class="hljs-title">str</span>)</span></span></code></pre>
+<h5 id="set">Set</h5>
+<p><strong>定义了一对一，一对多，多对多等数据结构</strong></p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Student</span><span class="hljs-params">(db.Entity)</span>:</span>
+    name = Required(str)
+    courses = Set(<span class="hljs-string">"Course"</span>)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Course</span><span class="hljs-params">(db.Entity)</span>:</span>
+    name = Required(str)
+    semester = Required(int)
+    students = Set(Student)
+    PrimaryKey(name, semester)</code></pre>
+<h6 id="composite-keys复合主键">Composite keys(复合主键)</h6>
+<pre class="prettyprint"><code class=" hljs haskell"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-type">Example1</span><span class="hljs-container">(<span class="hljs-title">db</span>.<span class="hljs-type">Entity</span>)</span>:
+    a = <span class="hljs-type">Required</span><span class="hljs-container">(<span class="hljs-title">int</span>)</span>
+    b = <span class="hljs-type">Required</span><span class="hljs-container">(<span class="hljs-title">str</span>)</span>
+    <span class="hljs-type">PrimaryKey</span><span class="hljs-container">(<span class="hljs-title">a</span>, <span class="hljs-title">b</span>)</span></span></code></pre>
+<p>建表语句</p>
+<pre class="prettyprint"><code class=" hljs sql"><span class="hljs-operator"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-string">`example1`</span> (
+  <span class="hljs-string">`a`</span> <span class="hljs-keyword">INTEGER</span> <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+  <span class="hljs-string">`b`</span> <span class="hljs-keyword">VARCHAR</span>(<span class="hljs-number">255</span>) <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+  <span class="hljs-keyword">PRIMARY</span> <span class="hljs-keyword">KEY</span> (<span class="hljs-string">`a`</span>, <span class="hljs-string">`b`</span>)
+)</span></code></pre>
+<h6 id="constraint-外键约束">CONSTRAINT 外键约束</h6>
+<pre class="prettyprint"><code class=" hljs haskell"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-type">Example2</span><span class="hljs-container">(<span class="hljs-title">db</span>.<span class="hljs-type">Entity</span>)</span>:
+    a = <span class="hljs-type">Required</span><span class="hljs-container">(<span class="hljs-title">str</span>)</span>
+    b = <span class="hljs-type">Optional</span><span class="hljs-container">(<span class="hljs-title">int</span>)</span>
+    composite_key<span class="hljs-container">(<span class="hljs-title">a</span>, <span class="hljs-title">b</span>)</span></span></code></pre>
+<p>建表语句</p>
+<pre class="prettyprint"><code class=" hljs sql"><span class="hljs-operator"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-string">`example2`</span> (
+  <span class="hljs-string">`id`</span> <span class="hljs-keyword">INTEGER</span> <span class="hljs-keyword">PRIMARY</span> <span class="hljs-keyword">KEY</span> AUTO_INCREMENT,
+  <span class="hljs-string">`a`</span> <span class="hljs-keyword">VARCHAR</span>(<span class="hljs-number">255</span>) <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+  <span class="hljs-string">`b`</span> <span class="hljs-keyword">INTEGER</span>,
+  <span class="hljs-keyword">CONSTRAINT</span> <span class="hljs-string">`unq_example2__a_b`</span> <span class="hljs-keyword">UNIQUE</span> (<span class="hljs-string">`a`</span>, <span class="hljs-string">`b`</span>)
+)</span></code></pre>
+<h6 id="composite-indexes复合索引">Composite indexes(复合索引)</h6>
+<pre class="prettyprint"><code class=" hljs haskell"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-type">Example1</span><span class="hljs-container">(<span class="hljs-title">db</span>.<span class="hljs-type">Entity</span>)</span>:
+    a = <span class="hljs-type">Required</span><span class="hljs-container">(<span class="hljs-title">str</span>)</span>
+    b = <span class="hljs-type">Optional</span><span class="hljs-container">(<span class="hljs-title">int</span>)</span>
+    composite_index<span class="hljs-container">(<span class="hljs-title">a</span>, <span class="hljs-title">b</span>)</span>
+    #也可以使用字符串composite_index<span class="hljs-container">(<span class="hljs-title">a</span>, '<span class="hljs-title">b'</span>)</span></span></code></pre>
+<pre class="prettyprint"><code class=" hljs sql"><span class="hljs-operator"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-string">`example1`</span> (
+  <span class="hljs-string">`id`</span> <span class="hljs-keyword">INTEGER</span> <span class="hljs-keyword">PRIMARY</span> <span class="hljs-keyword">KEY</span> AUTO_INCREMENT,
+  <span class="hljs-string">`a`</span> <span class="hljs-keyword">VARCHAR</span>(<span class="hljs-number">255</span>) <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+  <span class="hljs-string">`b`</span> <span class="hljs-keyword">INTEGER</span>
+)
+
+<span class="hljs-keyword">CREATE</span> INDEX <span class="hljs-string">`idx_example1__a_b`</span> <span class="hljs-keyword">ON</span> <span class="hljs-string">`example1`</span> (<span class="hljs-string">`a`</span>, <span class="hljs-string">`b`</span>)</span></code></pre>
+<h4 id="属性数据类型">属性数据类型</h4>
+<p>格式为 <br>
+<strong>属性名 = 属性类型(数据类型)</strong></br></p>
+<ul>
+<li>str</li>
+<li>unicode</li>
+<li>int</li>
+<li>float</li>
+<li>Decimal</li>
+<li>datetime</li>
+<li>date</li>
+<li>time</li>
+<li>timedelta</li>
+<li>bool</li>
+<li>buffer - used for binary data in Python 2 and 3</li>
+<li>bytes - used for binary data in Python 3</li>
+<li>LongStr - used for large strings</li>
+<li>LongUnicode - used for large strings</li>
+<li>UUID</li>
+</ul>
+<pre class="prettyprint"><code class=" hljs makefile"><span class="hljs-constant">attr1</span> = Required(str)
+<span class="hljs-comment"># 一样</span>
+<span class="hljs-constant">attr2</span> = Required(unicode)
+
+<span class="hljs-constant">attr3</span> = Required(LongStr)
+<span class="hljs-comment"># 一样</span>
+<span class="hljs-constant">attr4</span> = Required(LongUnicode)
+
+<span class="hljs-constant">attr1</span> = Required(buffer) # Python 2 and 3
+
+<span class="hljs-constant">attr2</span> = Required(bytes) # Python 3 only</code></pre>
+<h4 id="属性参数">属性参数</h4>
+<p><strong>字符串长度</strong></p>
+<pre class="prettyprint"><code class=" hljs axapta">name = Required(<span class="hljs-keyword">str</span>, <span class="hljs-number">40</span>)   <span class="hljs-preprocessor">#  VARCHAR(40)</span></code></pre>
+<p><strong>默认为255</strong></p>
+<p><strong>整数的大小</strong></p>
+<pre class="prettyprint"><code class=" hljs mel">attr1 = Required(<span class="hljs-keyword">int</span>, <span class="hljs-keyword">size</span>=<span class="hljs-number">8</span>)   # <span class="hljs-number">8</span> bit - TINYINT <span class="hljs-keyword">in</span> MySQL
+attr2 = Required(<span class="hljs-keyword">int</span>, <span class="hljs-keyword">size</span>=<span class="hljs-number">16</span>)  # <span class="hljs-number">16</span> bit - SMALLINT <span class="hljs-keyword">in</span> MySQL
+attr3 = Required(<span class="hljs-keyword">int</span>, <span class="hljs-keyword">size</span>=<span class="hljs-number">24</span>)  # <span class="hljs-number">24</span> bit - MEDIUMINT <span class="hljs-keyword">in</span> MySQL
+attr4 = Required(<span class="hljs-keyword">int</span>, <span class="hljs-keyword">size</span>=<span class="hljs-number">32</span>)  # <span class="hljs-number">32</span> bit - INTEGER <span class="hljs-keyword">in</span> MySQL
+attr5 = Required(<span class="hljs-keyword">int</span>, <span class="hljs-keyword">size</span>=<span class="hljs-number">64</span>)  # <span class="hljs-number">64</span> bit - BIGINT <span class="hljs-keyword">in</span> MySQL</code></pre>
+<p>无符号</p>
+<pre class="prettyprint"><code class=" hljs objectivec">attr1 = Required(<span class="hljs-keyword">int</span>, size=<span class="hljs-number">8</span>, <span class="hljs-keyword">unsigned</span>=True) <span class="hljs-preprocessor"># TINYINT UNSIGNED in MySQL</span></code></pre>
+<p><strong>默认32bit INTEGER</strong></p>
+<p><strong>小数和精度</strong></p>
+<pre class="prettyprint"><code class=" hljs vbnet">price = Required(<span class="hljs-built_in">Decimal</span>, <span class="hljs-number">10</span>, <span class="hljs-number">2</span>)   <span class="hljs-preprocessor">#  DECIMAL(10, 2)</span></code></pre>
+<p><strong>时间</strong></p>
+<pre class="prettyprint"><code class=" hljs fix"><span class="hljs-attribute">dt </span>=<span class="hljs-string"> Required(datetime, 6)</span></code></pre>
+<p><strong>其他的参数</strong> <br>
+unique <br>
+Boolean 是否唯一</br></br></p>
+<p>auto <br>
+Boolean 是否自增</br></p>
+<p>default <br>
+默认值</br></p>
+<p>sql_default <br>
+created_at = Required(datetime, sql_default=’CURRENT_TIMESTAMP’)</br></p>
+<p>index <br>
+index=True创建的默认索引名称 <br>
+index=’index_name’指定索引名称.</br></br></p>
+<p>sql_type</p>
+<p>lazy <br>
+Boolean 延迟加载的属性加载对象</br></p>
+<p>cascade_delete <br>
+关联删除对象</br></p>
+<p>column <br>
+映射到数据库的列名</br></p>
+<p>columns <br>
+Set(多对多列名)</br></p>
+<p>reverse <br>
+Specifies the attribute at the other end which should be used for the relationship.</br></p>
+<p>reverse_column <br>
+Used for a symmetric relationship in order to specify the name of the database column for the intermediate table.</br></p>
+<p>reverse_columns <br>
+Used for a symmetric relationship if the entity has a composite primary key. Allows you to specify the name of the database columns for the intermediate table.</br></p>
+<p>table <br>
+多对多中间表的表名</br></p>
+<p>nullable <br>
+允许该列为数据库中的空</br></p>
+<p>volatile <br>
+Usually you specify the value of the attribute in Python and Pony stores this value in the database. But sometimes you might want to have some logic in the database which changes the value for a column. For example, you can have a trigger in the database which updates the timestamp of the last object’s modification. In this case you want to have Pony to forget the value of the attribute on object’s update sent to the database and read it from the database at the next access attempt. Set volatile=True in order to let Pony know that this attribute can be changed in the database.</br></p>
+<p>The volatile=True option can be combined with the sql_default=True option if the value for this attribute is going to be both created and updated by the database.</p>
+<p>You can get the exception UnrepeatableReadError: Value … was updated outside of current transaction if another transaction changes the value of the attribute which is used in the current transaction. Pony notifies about it because this situation can break the business logic of the application. If you don’t want Pony to protect you from such concurrent modifications you can set volatile=True for an attribute.</p>
+<p>sequence_name <br>
+Allows you to specify the sequence name used for PrimaryKey attributes for Oracle database.</br></p>
+<p>py_check <br>
+可以指定一个函数，检查数据是否合法和修改数据</br></p>
+<p>class Student(db.Entity): <br>
+    name = Required(str) <br>
+    gpa = Required(float, py_check=lambda val: val &gt;= 0 and val &lt;= 5) <br>
+min <br>
+Allows you to specify the minimum allowed value for numeric attributes (int, float, Decimal). If you will try to assign the value that is less than the specified min value, you’ll get the ValueError exception.</br></br></br></br></p>
+<p>max <br>
+Allows you to specify the maximum allowed value for numeric attributes (int, float, Decimal). If you will try to assign the value that is greater than the specified max value, you’ll get the ValueError exception.</br></p>
+<h2 id="实例inheritance">实例（inheritance）</h2>
+<p><strong>每个实例对应于数据库表中的一行</strong> <br>
+比如有一个Person表记录Person的姓名(name)和年龄(age)</br></p>
+<pre class="prettyprint"><code class=" hljs haskell"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-type">Person</span><span class="hljs-container">(<span class="hljs-title">db</span>.<span class="hljs-type">Entity</span>)</span>:
+    name = <span class="hljs-type">Required</span><span class="hljs-container">(<span class="hljs-title">str</span>)</span>
+    age = <span class="hljs-type">Required</span><span class="hljs-container">(<span class="hljs-title">int</span>)</span>
+
+sql_debug<span class="hljs-container">(<span class="hljs-type">True</span>)</span>#显示debug信息<span class="hljs-container">(<span class="hljs-title">sql</span>语句)</span>在这句代码后的显示debug
+db.generate_mapping<span class="hljs-container">(<span class="hljs-title">create_tables</span>=<span class="hljs-type">True</span>)</span>#如果数据库表没有创建表</span></code></pre>
+<p>输出</p>
+<pre class="prettyprint"><code class=" hljs sql">GET CONNECTION FROM THE LOCAL POOL
+<span class="hljs-operator"><span class="hljs-keyword">SET</span> foreign_key_checks = <span class="hljs-number">0</span>
+<span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-string">`person`</span> (
+  <span class="hljs-string">`id`</span> <span class="hljs-keyword">INTEGER</span> <span class="hljs-keyword">PRIMARY</span> <span class="hljs-keyword">KEY</span> AUTO_INCREMENT,
+  <span class="hljs-string">`name`</span> <span class="hljs-keyword">VARCHAR</span>(<span class="hljs-number">255</span>) <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+  <span class="hljs-string">`age`</span> <span class="hljs-keyword">INTEGER</span> <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>
+)
+
+<span class="hljs-keyword">SELECT</span> <span class="hljs-string">`person`</span>.<span class="hljs-string">`id`</span>, <span class="hljs-string">`person`</span>.<span class="hljs-string">`name`</span>, <span class="hljs-string">`person`</span>.<span class="hljs-string">`age`</span>
+<span class="hljs-keyword">FROM</span> <span class="hljs-string">`person`</span> <span class="hljs-string">`person`</span>
+<span class="hljs-keyword">WHERE</span> <span class="hljs-number">0</span> = <span class="hljs-number">1</span>
+
+<span class="hljs-keyword">COMMIT</span>
+<span class="hljs-keyword">SET</span> foreign_key_checks = <span class="hljs-number">1</span>
+<span class="hljs-keyword">CLOSE</span> <span class="hljs-keyword">CONNECTION</span></span></code></pre>
+<h3 id="会话">会话</h3>
+<p><strong>Pony规定与数据库进行交互的代码必须在数据库会话中工作</strong> <br>
+<strong>可以使用@ db_session装修或db_session上下文管理数据库的工作。</strong> <br>
+<strong>当会话结束时，它会做以下操作</strong></br></br></p>
+<ul>
+<li>提交事务或则回滚事务。</li>
+<li>返回连接池的数据库连接。</li>
+<li>清除缓存。</li>
+</ul>
+<p>使用修饰器</p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-decorator">@db_session</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">check_user</span><span class="hljs-params">(username)</span>:</span>
+    <span class="hljs-keyword">return</span> User.exists(username=username)</code></pre>
+<p>db_session上下文管理器</p>
+<pre class="prettyprint"><code class=" hljs r">def process_request():
+    <span class="hljs-keyword">...</span>
+    with db_session:
+        u = User.get(username=username)
+        <span class="hljs-keyword">...</span></code></pre>
+<h3 id="创建实例">创建实例</h3>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment"># -*- coding: utf-8 -*-</span>
+<span class="hljs-keyword">from</span> pony.orm <span class="hljs-keyword">import</span> *
+
+db = Database(<span class="hljs-string">"mysql"</span>, host=<span class="hljs-string">"localhost"</span>,
+              user=<span class="hljs-string">"root"</span>,
+              passwd=<span class="hljs-string">"123123"</span>,
+              db=<span class="hljs-string">"t2"</span>)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span><span class="hljs-params">(db.Entity)</span>:</span>
+    name = Required(str)
+    age = Required(int)
+
+sql_debug(<span class="hljs-keyword">True</span>)<span class="hljs-comment">#显示debug信息(sql语句)</span>
+db.generate_mapping(create_tables=<span class="hljs-keyword">True</span>)<span class="hljs-comment">#如果数据库表没有创建表</span>
+
+<span class="hljs-decorator">@db_session</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">create_persons</span><span class="hljs-params">()</span>:</span>
+    p1 = Person(name=<span class="hljs-string">"Person1"</span>, age=<span class="hljs-number">20</span>)
+    p2 = Person(name=<span class="hljs-string">"Person2"</span>, age=<span class="hljs-number">22</span>)
+    p3 = Person(name=<span class="hljs-string">"Person3"</span>, age=<span class="hljs-number">12</span>)
+    <span class="hljs-keyword">print</span> p1.id <span class="hljs-comment">#这里拿不到id,没提交</span>
+    commit()
+    <span class="hljs-keyword">print</span> p1.id <span class="hljs-comment">#这里拿不到已经有id</span>
+
+create_persons()</code></pre>
+<p>输出</p>
+<pre class="prettyprint"><code class=" hljs sql">GET CONNECTION FROM THE LOCAL POOL
+<span class="hljs-operator"><span class="hljs-keyword">SET</span> foreign_key_checks = <span class="hljs-number">0</span>
+<span class="hljs-keyword">SELECT</span> <span class="hljs-string">`person`</span>.<span class="hljs-string">`id`</span>, <span class="hljs-string">`person`</span>.<span class="hljs-string">`name`</span>, <span class="hljs-string">`person`</span>.<span class="hljs-string">`age`</span>
+<span class="hljs-keyword">FROM</span> <span class="hljs-string">`person`</span> <span class="hljs-string">`person`</span>
+<span class="hljs-keyword">WHERE</span> <span class="hljs-number">0</span> = <span class="hljs-number">1</span>
+
+<span class="hljs-keyword">COMMIT</span>
+<span class="hljs-keyword">SET</span> foreign_key_checks = <span class="hljs-number">1</span>
+<span class="hljs-keyword">CLOSE</span> <span class="hljs-keyword">CONNECTION</span>
+None
+<span class="hljs-keyword">GET</span> NEW <span class="hljs-keyword">CONNECTION</span>
+<span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> <span class="hljs-string">`person`</span> (<span class="hljs-string">`name`</span>, <span class="hljs-string">`age`</span>) <span class="hljs-keyword">VALUES</span> (%s, %s)
+[u<span class="hljs-string">'Person1'</span>, <span class="hljs-number">20</span>]
+
+<span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> <span class="hljs-string">`person`</span> (<span class="hljs-string">`name`</span>, <span class="hljs-string">`age`</span>) <span class="hljs-keyword">VALUES</span> (%s, %s)
+[u<span class="hljs-string">'Person2'</span>, <span class="hljs-number">22</span>]
+
+<span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> <span class="hljs-string">`person`</span> (<span class="hljs-string">`name`</span>, <span class="hljs-string">`age`</span>) <span class="hljs-keyword">VALUES</span> (%s, %s)
+[u<span class="hljs-string">'Person3'</span>, <span class="hljs-number">12</span>]
+
+<span class="hljs-keyword">COMMIT</span>
+<span class="hljs-number">1</span>
+RELEASE <span class="hljs-keyword">CONNECTION</span></span></code></pre>
+<p>数据已经插入</p>
+<h4 id="外键和继承">外键和继承</h4>
+<p><strong>外键必须设置2边的字段，django可以只设置多的一边的关系，</strong></p>
+<h5 id="一对一">一对一</h5>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span><span class="hljs-params">(db.Entity)</span>:</span>
+    name = Required(str)
+    cart = Optional(<span class="hljs-string">"Cart"</span>) <span class="hljs-comment">#必须Optional-Required or Optional-Optional</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Cart</span><span class="hljs-params">(db.Entity)</span>:</span>
+    user = Required(<span class="hljs-string">"User"</span>)</code></pre>
+<h5 id="多对多">多对多</h5>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Product</span><span class="hljs-params">(db.Entity)</span>:</span>
+    tags = Set(<span class="hljs-string">"Tag"</span>)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Tag</span><span class="hljs-params">(db.Entity)</span>:</span>
+    products = Set(Product)</code></pre>
+<h5 id="一对多和继承">一对多和继承</h5>
+<p>学生和教授从Person上继承， 教授有多个学生(一对多的关系)</p>
+<p><strong>person保函所有子类的属性，有一个classtype区分是属于哪个对象，默认是class name, 可以添加<code>_discriminator_</code>属性修改classtype</strong></p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment"># -*- coding: utf-8 -*-</span>
+<span class="hljs-keyword">from</span> pony.orm <span class="hljs-keyword">import</span> *
+<span class="hljs-keyword">from</span> decimal <span class="hljs-keyword">import</span> Decimal
+
+db = Database(<span class="hljs-string">"mysql"</span>, host=<span class="hljs-string">"localhost"</span>,
+              user=<span class="hljs-string">"root"</span>,
+              passwd=<span class="hljs-string">"123123"</span>,
+              db=<span class="hljs-string">"t2"</span>)
+db.drop_table(<span class="hljs-string">"person"</span>, with_all_data=<span class="hljs-keyword">True</span>)
+
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span><span class="hljs-params">(db.Entity)</span>:</span>
+    _discriminator_ = <span class="hljs-number">1</span> <span class="hljs-comment">#刻</span>
+    name = Required(str)
+    age = Required(int)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Student</span><span class="hljs-params">(Person)</span>:</span>
+    _discriminator_ = <span class="hljs-number">3</span>
+    gpa = Optional(Decimal)
+    mentor = Optional(<span class="hljs-string">"Professor"</span>)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Professor</span><span class="hljs-params">(Person)</span>:</span>
+    _discriminator_ = <span class="hljs-number">2</span>
+    degree = Required(str)
+    students = Set(<span class="hljs-string">"Student"</span>)
+
+sql_debug(<span class="hljs-keyword">True</span>)  <span class="hljs-comment"># 显示debug信息(sql语句)</span>
+db.generate_mapping(create_tables=<span class="hljs-keyword">True</span>)  <span class="hljs-comment"># 如果数据库表没有创建表</span>
+
+<span class="hljs-comment"># @db_session</span>
+<span class="hljs-comment"># def create_persons():</span>
+<span class="hljs-comment">#     p1 = Person(name="Person", age=20)</span>
+<span class="hljs-comment">#     s = Student(name="Student", age=22, gpa=1.2)</span>
+<span class="hljs-comment">#也可以Professor添加Student</span>
+<span class="hljs-comment">#     p2 = Professor(name="Professor", age=12, degree="aaaaaa", students=[s])</span>
+<span class="hljs-comment">#     commit()</span>
+
+<span class="hljs-decorator">@db_session</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">create_persons</span><span class="hljs-params">()</span>:</span>
+    p1 = Person(name=<span class="hljs-string">"Person"</span>, age=<span class="hljs-number">20</span>)
+    s = Student(name=<span class="hljs-string">"Student"</span>, age=<span class="hljs-number">22</span>, gpa=<span class="hljs-number">1.2</span>)
+    p2 = Professor(name=<span class="hljs-string">"Professor"</span>, age=<span class="hljs-number">12</span>, degree=<span class="hljs-string">"aaaaaa"</span>, students=[s])
+    commit()
+
+create_persons()
+
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span><span class="hljs-params">(db.Entity)</span>:</span>
+    _discriminator_ = <span class="hljs-number">1</span>
+    name = Required(str)
+    age = Required(int)</code></pre>
+<p>输出</p>
+<pre class="prettyprint"><code class=" hljs sql">GET NEW CONNECTION
+<span class="hljs-operator"><span class="hljs-keyword">SET</span> foreign_key_checks = <span class="hljs-number">0</span>
+<span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">TABLE</span> <span class="hljs-string">`person`</span> (
+  <span class="hljs-string">`id`</span> <span class="hljs-keyword">INTEGER</span> <span class="hljs-keyword">PRIMARY</span> <span class="hljs-keyword">KEY</span> AUTO_INCREMENT,
+  <span class="hljs-string">`name`</span> <span class="hljs-keyword">VARCHAR</span>(<span class="hljs-number">255</span>) <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+  <span class="hljs-string">`age`</span> <span class="hljs-keyword">INTEGER</span> <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+  <span class="hljs-string">`classtype`</span> <span class="hljs-keyword">VARCHAR</span>(<span class="hljs-number">255</span>) <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>,
+  <span class="hljs-string">`gpa`</span> <span class="hljs-keyword">DECIMAL</span>(<span class="hljs-number">12</span>, <span class="hljs-number">2</span>),
+  <span class="hljs-string">`mentor`</span> <span class="hljs-keyword">INTEGER</span>,
+  <span class="hljs-string">`degree`</span> <span class="hljs-keyword">VARCHAR</span>(<span class="hljs-number">255</span>)
+)
+
+<span class="hljs-keyword">CREATE</span> INDEX <span class="hljs-string">`idx_person__mentor`</span> <span class="hljs-keyword">ON</span> <span class="hljs-string">`person`</span> (<span class="hljs-string">`mentor`</span>)
+
+<span class="hljs-keyword">SELECT</span> <span class="hljs-string">`person`</span>.<span class="hljs-string">`id`</span>, <span class="hljs-string">`person`</span>.<span class="hljs-string">`name`</span>, <span class="hljs-string">`person`</span>.<span class="hljs-string">`age`</span>, <span class="hljs-string">`person`</span>.<span class="hljs-string">`classtype`</span>, <span class="hljs-string">`person`</span>.<span class="hljs-string">`gpa`</span>, <span class="hljs-string">`person`</span>.<span class="hljs-string">`mentor`</span>, <span class="hljs-string">`person`</span>.<span class="hljs-string">`degree`</span>
+<span class="hljs-keyword">FROM</span> <span class="hljs-string">`person`</span> <span class="hljs-string">`person`</span>
+<span class="hljs-keyword">WHERE</span> <span class="hljs-number">0</span> = <span class="hljs-number">1</span>
+
+<span class="hljs-keyword">COMMIT</span>
+<span class="hljs-keyword">SET</span> foreign_key_checks = <span class="hljs-number">1</span>
+<span class="hljs-keyword">CLOSE</span> <span class="hljs-keyword">CONNECTION</span>
+<span class="hljs-keyword">GET</span> NEW <span class="hljs-keyword">CONNECTION</span>
+<span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> <span class="hljs-string">`person`</span> (<span class="hljs-string">`name`</span>, <span class="hljs-string">`age`</span>, <span class="hljs-string">`classtype`</span>) <span class="hljs-keyword">VALUES</span> (%s, %s, %s)
+[u<span class="hljs-string">'Person'</span>, <span class="hljs-number">20</span>, <span class="hljs-string">'1'</span>]
+
+<span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> <span class="hljs-string">`person`</span> (<span class="hljs-string">`name`</span>, <span class="hljs-string">`age`</span>, <span class="hljs-string">`classtype`</span>, <span class="hljs-string">`degree`</span>) <span class="hljs-keyword">VALUES</span> (%s, %s, %s, %s)
+[u<span class="hljs-string">'Professor'</span>, <span class="hljs-number">12</span>, <span class="hljs-string">'2'</span>, u<span class="hljs-string">'aaaaaa'</span>]
+
+<span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> <span class="hljs-string">`person`</span> (<span class="hljs-string">`name`</span>, <span class="hljs-string">`age`</span>, <span class="hljs-string">`classtype`</span>, <span class="hljs-string">`gpa`</span>, <span class="hljs-string">`mentor`</span>) <span class="hljs-keyword">VALUES</span> (%s, %s, %s, %s, %s)
+[u<span class="hljs-string">'Student'</span>, <span class="hljs-number">22</span>, <span class="hljs-string">'3'</span>, <span class="hljs-keyword">Decimal</span>(<span class="hljs-string">'1.2'</span>), <span class="hljs-number">2</span>] #已经把外键添加了
+
+<span class="hljs-keyword">COMMIT</span>
+RELEASE <span class="hljs-keyword">CONNECTION</span></span></code></pre>
+<h3 id="获取实例">获取实例</h3>
+<p>获取单个 <br>
+<strong>如果返回多个实例会报错，只能返回一个实例</strong></br></p>
+<pre class="prettyprint"><code class=" hljs applescript">p = Person.<span class="hljs-keyword">get</span>(<span class="hljs-property">name</span>=<span class="hljs-string">"Person"</span>)</code></pre>
+<p>查询</p>
+<pre class="prettyprint"><code class=" hljs fix"><span class="hljs-attribute">persons </span>=<span class="hljs-string"> Person.select()</span></code></pre>
+<p>select并没有连接数据库查询，只是返回一个Query object <br>
+调用 <br>
+persons[:] 返回所有Person实例</br></br></p>
+<pre class="prettyprint"><code class=" hljs autohotkey">'''
+SELECT <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`i</span>d<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`n</span>ame<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`a</span>ge<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`c</span>lasstype<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`m</span>entor<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`g</span>pa<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`d</span>egree<span class="hljs-escape">`
+</span>FROM <span class="hljs-escape">`p</span>erson<span class="hljs-escape">` </span><span class="hljs-escape">`p</span><span class="hljs-escape">`
+</span>WHERE <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`c</span>lasstype<span class="hljs-escape">` </span>IN ('<span class="hljs-number">3</span>', '<span class="hljs-number">2</span>', '<span class="hljs-number">1</span>')
+
+[Person[<span class="hljs-number">1</span>], Professor[<span class="hljs-number">2</span>], Student[<span class="hljs-number">3</span>], Person[<span class="hljs-number">4</span>]]
+'''</code></pre>
+<p><strong>limit</strong></p>
+<pre class="prettyprint"><code class=" hljs css"><span class="hljs-tag">persons</span><span class="hljs-attr_selector">[1:5]</span></code></pre>
+<p><strong>show()</strong></p>
+<pre class="prettyprint"><code class=" hljs sql">persons.<span class="hljs-operator"><span class="hljs-keyword">show</span>()</span></code></pre>
+<pre class="prettyprint"><code class=" hljs asciidoc"><span class="hljs-header">id|name     |age|classtype
+--+---------+---+---------</span>
+1 |Person   |20 |1        
+2 |Professor|12 |2        
+3 |Student  |22 |3        
+4 |Person   |25 |1        
+</code></pre>
+<p><strong>select()</strong> <br>
+<strong>第一次见这查询方法，直接以generator expression，然后解析AST树的方式构造SQL语句</strong></br></p>
+<pre class="prettyprint"><code class=" hljs cs"><span class="hljs-keyword">select</span>(p <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> Person) <span class="hljs-preprocessor">#和Person.select()一样返回Query object</span></code></pre>
+<pre class="prettyprint"><code class=" hljs applescript">select((p.<span class="hljs-property">id</span>, p.<span class="hljs-property">name</span>) <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> Person)[:]</code></pre>
+<p>SQL</p>
+<pre class="prettyprint"><code class=" hljs autohotkey">SELECT <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`i</span>d<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`n</span>ame<span class="hljs-escape">`
+</span>FROM <span class="hljs-escape">`p</span>erson<span class="hljs-escape">` </span><span class="hljs-escape">`p</span><span class="hljs-escape">`
+</span>WHERE <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`c</span>lasstype<span class="hljs-escape">` </span>IN ('<span class="hljs-number">3</span>', '<span class="hljs-number">2</span>', '<span class="hljs-number">1</span>')</code></pre>
+<p>带where条件查询</p>
+<pre class="prettyprint"><code class=" hljs applescript">select((p.<span class="hljs-property">id</span>, p.<span class="hljs-property">name</span>) <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> Person <span class="hljs-keyword">if</span> p.age ==<span class="hljs-number">20</span>)[:]</code></pre>
+<p>SQL</p>
+<pre class="prettyprint"><code class=" hljs autohotkey">SELECT <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`i</span>d<span class="hljs-escape">`,</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`n</span>ame<span class="hljs-escape">`
+</span>FROM <span class="hljs-escape">`p</span>erson<span class="hljs-escape">` </span><span class="hljs-escape">`p</span><span class="hljs-escape">`
+</span>WHERE <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`c</span>lasstype<span class="hljs-escape">` </span>IN ('<span class="hljs-number">3</span>', '<span class="hljs-number">2</span>', '<span class="hljs-number">1</span>')
+  <span class="hljs-literal">AND</span> <span class="hljs-escape">`p</span><span class="hljs-escape">`.</span><span class="hljs-escape">`a</span>ge<span class="hljs-escape">` </span>= <span class="hljs-number">20</span></code></pre>
+<p>分组集合查询</p>
+<pre class="prettyprint"><code class=" hljs glsl">    select((<span class="hljs-built_in">max</span>(p.age)) <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> Person)[:] <span class="hljs-preprocessor">#[25]</span>
+    <span class="hljs-built_in">max</span>(p.age <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> Person) <span class="hljs-preprocessor">#25</span>
+    select(p.age <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> Person).<span class="hljs-built_in">max</span>() <span class="hljs-preprocessor">#25</span></code></pre>
+<p>还有很多具体参考<a href="http://doc.ponyorm.com/queries.html">官网</a></p>
+<h3 id="修改实例">修改实例</h3>
+<p>@db_session <br>
+def update_persons(): <br>
+    p = Person.get(id=2) <br>
+    p.age=1000 <br>
+    commit()</br></br></br></br></p>
+<p>update_persons()</p>
+<h3 id="删除">删除</h3>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-decorator">@db_session</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">delete_persons</span><span class="hljs-params">()</span>:</span>
+    p = Person.get(id=<span class="hljs-number">2</span>)
+    p.delete()
+    commit()
+
+delete_persons()</code></pre>
+<h3 id="beforeinsert-beforeupdate-beforedelete-hooks">before_insert, before_update, before_delete hooks</h3>
+<p>before_insert() <br>
+Is called only for newly created objects before it is inserted into the database.</br></p>
+<p>before_update() <br>
+Is called for entity instances before updating the instance in the database.</br></p>
+<p>before_delete() <br>
+Is called before deletion the entity instance in the database.</br></p>
+<p>after_insert() <br>
+Is called after the row is inserted into the database.</br></p>
+<p>after_update() <br>
+Is called after the instance updated in the database.</br></p>
+<p>after_delete() <br>
+Is called after the entity instance is deleted in the database.</br></p></div>
+
+</div>
