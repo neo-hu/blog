@@ -1,0 +1,220 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="初始化数据库连接">初始化数据库连接</h1>
+<pre class="prettyprint"><code class=" hljs php">DB_CONNECT_STRING = <span class="hljs-string">'mysql+mysqldb://root:123123@localhost/sqlalchemy?charset=utf8'</span>
+engine = create_engine(DB_CONNECT_STRING, <span class="hljs-keyword">echo</span>=<span class="hljs-keyword">True</span>)</code></pre>
+<pre class="prettyprint"><code class=" hljs ruby">数据库类型+数据库驱动名称<span class="hljs-symbol">://</span>用户名<span class="hljs-symbol">:</span>口令@机器地址<span class="hljs-symbol">:</span>端口号/数据库名</code></pre>
+<h1 id="创建dbsession">创建DBSession</h1>
+<pre class="prettyprint"><code class=" hljs ini"><span class="hljs-setting">DB_Session = <span class="hljs-value">sessionmaker(bind=engine)</span></span>
+<span class="hljs-setting">session = <span class="hljs-value">DB_Session()</span></span></code></pre>
+<h1 id="执行-sql">执行 SQL</h1>
+<pre class="prettyprint"><code class=" hljs sql">session.execute('<span class="hljs-operator"><span class="hljs-keyword">create</span> <span class="hljs-keyword">database</span> abc<span class="hljs-string">')
+print session.execute('</span><span class="hljs-keyword">show</span> databases<span class="hljs-string">').fetchall()
+session.execute('</span>use mysql<span class="hljs-string">')
+#查询所有
+print session.execute('</span><span class="hljs-keyword">select</span> * <span class="hljs-keyword">from</span> <span class="hljs-keyword">user</span><span class="hljs-string">').fetchall(), "fetchall"
+#第一条
+print session.execute('</span><span class="hljs-keyword">select</span> * <span class="hljs-keyword">from</span> <span class="hljs-keyword">user</span><span class="hljs-string">').first(), "first"
+#第一条
+print session.execute('</span><span class="hljs-keyword">select</span> * <span class="hljs-keyword">from</span> <span class="hljs-keyword">user</span><span class="hljs-string">').fetchone(), "fetchone"
+#查询2条记录
+print session.execute('</span><span class="hljs-keyword">select</span> * <span class="hljs-keyword">from</span> <span class="hljs-keyword">user</span><span class="hljs-string">').fetchmany(2), "fetchmany"</span></span></code></pre>
+<h1 id="model">Model</h1>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment">#declarative_base() 创建了一个 BaseModel 类，这个类的子类可以自动与一个表关联。</span>
+BaseModel = declarative_base()
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span><span class="hljs-params">(BaseModel)</span>:</span>
+    <span class="hljs-comment"># 表的名字:</span>
+    __tablename__ = <span class="hljs-string">'user'</span>
+
+    <span class="hljs-comment"># 表的结构:</span>
+    id = Column(Integer, primary_key=<span class="hljs-keyword">True</span>)
+    name = Column(String(<span class="hljs-number">20</span>), nullable=<span class="hljs-keyword">False</span>, unique=<span class="hljs-keyword">True</span>)
+    test = Column(String(<span class="hljs-number">20</span>), name=<span class="hljs-string">"a1"</span>, default=<span class="hljs-string">"a1"</span>)
+    email_address = Column(String(<span class="hljs-number">32</span>), nullable=<span class="hljs-keyword">False</span>, default=<span class="hljs-string">"email"</span>)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__repr__</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-string">'&lt;User id=%s,name=%s,test=%s,email_address=%s &gt;'</span> % (self.id, self.name, self.test, self.email_address)</code></pre>
+<blockquote>
+<p>primary_key 主键，自增 <br>
+  unique 唯一 UNIQUE (name) <br>
+  name 数据库字段名字 <br>
+  nullable  是否可以为空 False NOT NULL <br>
+  default 默认值</br></br></br></br></p>
+</blockquote>
+<h2 id="表属性">表属性</h2>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span><span class="hljs-params">(BaseModel)</span>:</span>
+    __table_args__ = {
+        <span class="hljs-string">'mysql_engine'</span>: <span class="hljs-string">'InnoDB'</span>,
+        <span class="hljs-string">'mysql_charset'</span>: <span class="hljs-string">'utf8'</span>
+    }</code></pre>
+<h2 id="建表-or-删除表">建表 or 删除表</h2>
+<pre class="prettyprint"><code class=" hljs avrasm"><span class="hljs-preprocessor">#建表</span>
+User<span class="hljs-preprocessor">.metadata</span><span class="hljs-preprocessor">.create</span>_all(engine) <span class="hljs-keyword">or</span>  BaseModel<span class="hljs-preprocessor">.metadata</span><span class="hljs-preprocessor">.create</span>_all(engine) <span class="hljs-preprocessor">#创建所有BaseModel的之类的表</span>
+<span class="hljs-preprocessor">#删除表</span>
+User<span class="hljs-preprocessor">.metadata</span><span class="hljs-preprocessor">.drop</span>_all(engine) <span class="hljs-keyword">or</span> BaseModel<span class="hljs-preprocessor">.metadata</span><span class="hljs-preprocessor">.drop</span>_all(engine) <span class="hljs-preprocessor">#同上</span></code></pre>
+<h2 id="使用">使用</h2>
+<pre class="prettyprint"><code class=" hljs sql">u1 = User(name="aa", email_address="aa_email")
+u2 = User(name="bb")
+session.add(u1)
+session.add(u2)
+session.<span class="hljs-operator"><span class="hljs-keyword">commit</span>()#提交会话
+
+query = <span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>)
+<span class="hljs-keyword">for</span> <span class="hljs-keyword">user</span> <span class="hljs-keyword">in</span> query:
+    print <span class="hljs-keyword">user</span>
+print query.<span class="hljs-keyword">all</span>()  # 查询所有
+print query.offset(<span class="hljs-number">1</span>).limit(<span class="hljs-number">2</span>).<span class="hljs-keyword">all</span>()  # LIMIT <span class="hljs-number">1</span>, <span class="hljs-number">2</span>
+print query.<span class="hljs-keyword">first</span>()  # 第一条,不存在返回None
+# print query.one() #之获取一条，不存在，或有多行记录时会抛出异常
+print query.filter(<span class="hljs-keyword">User</span>.id == <span class="hljs-number">2</span>).<span class="hljs-keyword">all</span>()  # <span class="hljs-keyword">WHERE</span> <span class="hljs-string">"user"</span>.id = <span class="hljs-number">2</span>
+print query.filter(<span class="hljs-keyword">User</span>.id &gt;= <span class="hljs-number">1</span>).<span class="hljs-keyword">all</span>()  # <span class="hljs-keyword">WHERE</span> <span class="hljs-string">"user"</span>.id &gt;= <span class="hljs-number">1</span>
+print query.filter(<span class="hljs-keyword">User</span>.id == <span class="hljs-keyword">User</span>.name).<span class="hljs-keyword">all</span>()  # <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">user</span>.id = <span class="hljs-keyword">user</span>.name
+print query.filter(<span class="hljs-keyword">User</span>.id &gt;= <span class="hljs-number">1</span>).filter(<span class="hljs-keyword">User</span>.id &lt;= <span class="hljs-number">11</span>).<span class="hljs-keyword">all</span>()  # <span class="hljs-keyword">WHERE</span> <span class="hljs-string">"user"</span>.id &gt;= <span class="hljs-number">1</span> <span class="hljs-keyword">AND</span> <span class="hljs-keyword">user</span>.id &lt;= <span class="hljs-number">11</span>
+print query.filter(<span class="hljs-keyword">User</span>.id &gt;= <span class="hljs-number">1</span>, <span class="hljs-keyword">User</span>.id &lt;= <span class="hljs-number">11</span>).<span class="hljs-keyword">all</span>()  # 同上
+print query.filter(or_(<span class="hljs-keyword">User</span>.id &gt;= <span class="hljs-number">1</span>, <span class="hljs-keyword">User</span>.id &lt;= <span class="hljs-number">11</span>),
+                   <span class="hljs-keyword">User</span>.name == <span class="hljs-string">"111"</span>).<span class="hljs-keyword">all</span>()  # (<span class="hljs-keyword">user</span>.id &gt;= <span class="hljs-number">1</span> <span class="hljs-keyword">OR</span> <span class="hljs-keyword">user</span>.id &lt;=<span class="hljs-number">11</span>) <span class="hljs-keyword">AND</span> <span class="hljs-keyword">user</span>.name = <span class="hljs-number">111</span>
+print query.filter(<span class="hljs-keyword">User</span>.id.in_((<span class="hljs-number">1</span>, <span class="hljs-number">2</span>))).<span class="hljs-keyword">all</span>()  # <span class="hljs-keyword">user</span>.id <span class="hljs-keyword">IN</span> (<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)
+print query.filter(<span class="hljs-keyword">User</span>.name.<span class="hljs-keyword">like</span>(<span class="hljs-string">"a"</span>)).<span class="hljs-keyword">all</span>()  # <span class="hljs-keyword">user</span>.name <span class="hljs-keyword">LIKE</span> <span class="hljs-string">"a"</span>
+print query.filter(<span class="hljs-keyword">User</span>.name.isnot(None)).<span class="hljs-keyword">all</span>()  # <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">user</span>.name <span class="hljs-keyword">IS</span> <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>
+print query.filter(<span class="hljs-keyword">User</span>.name != None).<span class="hljs-keyword">all</span>()  # <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">user</span>.name <span class="hljs-keyword">IS</span> <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">NULL</span>
+print query.filter(not_(<span class="hljs-keyword">User</span>.id != <span class="hljs-number">1</span>), not_(<span class="hljs-keyword">User</span>.name.<span class="hljs-keyword">like</span>(<span class="hljs-string">"a"</span>))).<span class="hljs-keyword">all</span>()  # <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">user</span>.id = <span class="hljs-number">1</span> <span class="hljs-keyword">AND</span> <span class="hljs-keyword">user</span>.name <span class="hljs-keyword">NOT</span> <span class="hljs-keyword">LIKE</span> a
+print query.filter(<span class="hljs-string">"id is null"</span>).<span class="hljs-keyword">all</span>()  # 支持字符串
+print query.<span class="hljs-keyword">get</span>(<span class="hljs-number">2</span>)  # 以主键获取,<span class="hljs-keyword">WHERE</span> <span class="hljs-string">"user"</span>.id = <span class="hljs-number">2</span>
+print query.order_by(<span class="hljs-string">"name"</span>)  # <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> <span class="hljs-string">"user"</span>.name
+print query.order_by(<span class="hljs-keyword">User</span>.name)  # 同上
+print query.order_by(<span class="hljs-keyword">User</span>.name.<span class="hljs-keyword">desc</span>())  # <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> <span class="hljs-string">"user"</span>.name <span class="hljs-keyword">desc</span>
+# print query.order_by(<span class="hljs-string">"name desc"</span>)# 同上
+print query.order_by(<span class="hljs-keyword">User</span>.name.<span class="hljs-keyword">desc</span>(), <span class="hljs-keyword">User</span>.id.<span class="hljs-keyword">desc</span>())  # <span class="hljs-keyword">ORDER</span> <span class="hljs-keyword">BY</span> name <span class="hljs-keyword">desc</span>, id <span class="hljs-keyword">desc</span>
+print query.<span class="hljs-aggregate">count</span>()
+print <span class="hljs-string">"#"</span> * <span class="hljs-number">30</span>
+#修改
+# query.filter(<span class="hljs-keyword">User</span>.id == <span class="hljs-number">1</span>).<span class="hljs-keyword">update</span>({<span class="hljs-keyword">User</span>.name: <span class="hljs-string">'c'</span>})
+print <span class="hljs-string">"#"</span> * <span class="hljs-number">30</span>
+
+
+query2 = <span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>).order_by(<span class="hljs-keyword">User</span>.name.<span class="hljs-keyword">desc</span>(), <span class="hljs-keyword">User</span>.id.<span class="hljs-keyword">desc</span>())
+print query2.<span class="hljs-keyword">all</span>()
+print <span class="hljs-string">"#"</span> * <span class="hljs-number">30</span>
+
+# 返回元组
+query3 = <span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>.name)
+print query3.<span class="hljs-keyword">all</span>()
+print query3.filter(<span class="hljs-keyword">User</span>.id == <span class="hljs-number">1</span>).scalar()  # 如果有记录，返回第一条记录的第一个元素
+
+print <span class="hljs-keyword">session</span>.query(<span class="hljs-string">'id'</span>, <span class="hljs-string">"name"</span>).select_from(<span class="hljs-keyword">User</span>).filter(
+    <span class="hljs-keyword">User</span>.id == <span class="hljs-number">1</span>).scalar()  # <span class="hljs-keyword">SELECT</span> id, name <span class="hljs-keyword">FROM</span> <span class="hljs-keyword">user</span> <span class="hljs-keyword">WHERE</span> <span class="hljs-keyword">user</span>.id = <span class="hljs-number">1</span>
+print <span class="hljs-string">"#"</span> * <span class="hljs-number">30</span>
+
+print <span class="hljs-keyword">session</span>.query(func.<span class="hljs-aggregate">count</span>(<span class="hljs-string">'1'</span>)).select_from(<span class="hljs-keyword">User</span>).scalar()
+print <span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>).filter(<span class="hljs-keyword">User</span>.name == func.now())#<span class="hljs-keyword">WHERE</span> <span class="hljs-string">"user"</span>.name = now()
+print <span class="hljs-keyword">session</span>.query(func.<span class="hljs-aggregate">count</span>(<span class="hljs-keyword">User</span>.id)).select_from(<span class="hljs-keyword">User</span>).scalar()
+print <span class="hljs-keyword">session</span>.query(func.<span class="hljs-aggregate">sum</span>(<span class="hljs-keyword">User</span>.id)).select_from(<span class="hljs-keyword">User</span>).scalar()
+
+print <span class="hljs-keyword">session</span>.query(func.now()).scalar()  # func 后可以跟任意函数名，只要该数据库支持
+print <span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>.id, func.md5(<span class="hljs-keyword">User</span>.name)).filter(<span class="hljs-keyword">User</span>.id == <span class="hljs-number">1</span>).<span class="hljs-keyword">all</span>()
+
+
+
+u = <span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>).<span class="hljs-keyword">get</span>(<span class="hljs-number">1</span>)
+print u
+u.name = <span class="hljs-string">"1111111111"</span>
+<span class="hljs-keyword">session</span>.flush()# 写数据库，但并不提交
+print <span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>).<span class="hljs-keyword">get</span>(<span class="hljs-number">1</span>)
+<span class="hljs-keyword">session</span>.<span class="hljs-keyword">rollback</span>()#返回
+print <span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>).<span class="hljs-keyword">get</span>(<span class="hljs-number">1</span>)
+u.name = <span class="hljs-string">"1111111111"</span>
+print query.<span class="hljs-keyword">all</span>()
+#优先操作 HIGH_PRIORITY  滞后操作 LOW_PRIORITY 延时插入 <span class="hljs-keyword">INSERT</span> DELAYED
+<span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>.name).prefix_with(<span class="hljs-string">'HIGH_PRIORITY'</span>).<span class="hljs-keyword">all</span>()#<span class="hljs-keyword">SELECT</span> HIGH_PRIORITY <span class="hljs-keyword">user</span>.name <span class="hljs-keyword">AS</span> user_name <span class="hljs-keyword">FROM</span> <span class="hljs-keyword">user</span>
+print query.<span class="hljs-keyword">all</span>()
+
+# <span class="hljs-keyword">session</span>.<span class="hljs-keyword">delete</span>(<span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>).<span class="hljs-keyword">get</span>(<span class="hljs-number">2</span>))
+# <span class="hljs-keyword">session</span>.<span class="hljs-keyword">delete</span>(<span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>).<span class="hljs-keyword">first</span>())
+# <span class="hljs-keyword">session</span>.query(<span class="hljs-keyword">User</span>).filter(<span class="hljs-keyword">User</span>.id &gt;= <span class="hljs-number">1</span>).<span class="hljs-keyword">delete</span>()
+<span class="hljs-keyword">session</span>.<span class="hljs-keyword">commit</span>()
+</span></code></pre>
+<h2 id="外建">外建</h2>
+<pre class="prettyprint"><code class=" hljs python">
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span><span class="hljs-params">(BaseModel)</span>:</span>
+    <span class="hljs-comment"># 表的名字:</span>
+    __tablename__ = <span class="hljs-string">'user'</span>
+
+    <span class="hljs-comment"># 表的结构:</span>
+    id = Column(Integer, primary_key=<span class="hljs-keyword">True</span>)
+    name = Column(String(<span class="hljs-number">20</span>), nullable=<span class="hljs-keyword">False</span>, unique=<span class="hljs-keyword">True</span>)
+    test = Column(String(<span class="hljs-number">20</span>), name=<span class="hljs-string">"a1"</span>, default=<span class="hljs-string">"a1"</span>)
+    email_address = Column(String(<span class="hljs-number">32</span>), nullable=<span class="hljs-keyword">False</span>, default=<span class="hljs-string">"email"</span>)
+    addresses = relationship(<span class="hljs-string">"Address"</span>, order_by=<span class="hljs-string">"Address.id"</span>, backref=<span class="hljs-string">"user"</span>)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__repr__</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-string">'&lt;User id=%s,name=%s,test=%s,email_address=%s &gt;'</span> % (self.id, self.name, self.test, self.email_address)
+
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Address</span><span class="hljs-params">(BaseModel)</span>:</span>
+    __tablename__ = <span class="hljs-string">'address'</span>
+
+    id = Column(Integer, primary_key=<span class="hljs-keyword">True</span>)
+    address = Column(String(<span class="hljs-number">20</span>), nullable=<span class="hljs-keyword">False</span>, unique=<span class="hljs-keyword">True</span>)
+    user_id = Column(Integer, ForeignKey(<span class="hljs-string">'user.id'</span>, ondelete=<span class="hljs-string">'CASCADE'</span>, onupdate=<span class="hljs-string">'CASCADE'</span>))
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__repr__</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-string">'&lt;User id=%s,name=%s,test=%s,email_address=%s &gt;'</span> % (self.id, self.address)</code></pre>
+<blockquote>
+<p>user_id = Column(Integer, ForeignKey(‘user.id’, ondelete=’CASCADE’, onupdate=’CASCADE’)) 原因是删除 user 表的数据，可能会导致 address 的外键不指向一个真实存在的记录。在默认情况下，MySQL 会拒绝这种操作，也就是 RESTRICT。InnoDB 还允许指定 ON DELETE 为 CASCADE 和 SET NULL，前者会删除 friendship 中无效的记录，后者会将这些记录的外键设为 NULL。 <br>
+  relationship 标记User的addresses连接到Address表，session.query(User).filter(User.name == “bb”).one().addresses  <br>
+  backref 反向查询的细节  session.query(Address).filter(Address.address==”a1”).one().user</br></br></p>
+</blockquote>
+<pre class="prettyprint"><code class=" hljs avrasm">
+u1 = User(name=<span class="hljs-string">"aa"</span>, email_address=<span class="hljs-string">"aa_email"</span>)
+u2 = User(name=<span class="hljs-string">"bb"</span>)
+
+a1 = Address(address=<span class="hljs-string">"a1"</span>)
+a2 = Address(address=<span class="hljs-string">"a2"</span>)
+a3 = Address(address=<span class="hljs-string">"a3"</span>)
+
+u2<span class="hljs-preprocessor">.addresses</span> = [a1, a2]
+session<span class="hljs-preprocessor">.add</span>(u1)
+session<span class="hljs-preprocessor">.add</span>(u2)
+session<span class="hljs-preprocessor">.add</span>(a3)
+session<span class="hljs-preprocessor">.flush</span>()
+
+session<span class="hljs-preprocessor">.commit</span>()
+print session<span class="hljs-preprocessor">.query</span>(User)<span class="hljs-preprocessor">.filter</span>(User<span class="hljs-preprocessor">.name</span> == <span class="hljs-string">"bb"</span>)<span class="hljs-preprocessor">.one</span>()<span class="hljs-preprocessor">.addresses</span>
+print session<span class="hljs-preprocessor">.query</span>(Address)<span class="hljs-preprocessor">.filter</span>(Address<span class="hljs-preprocessor">.address</span>==<span class="hljs-string">"a1"</span>)<span class="hljs-preprocessor">.one</span>()<span class="hljs-preprocessor">.user</span>
+
+print session<span class="hljs-preprocessor">.query</span>(User)<span class="hljs-preprocessor">.all</span>()
+print session<span class="hljs-preprocessor">.query</span>(Address)<span class="hljs-preprocessor">.all</span>()
+
+</code></pre>
+<h2 id="多对多">多对多</h2>
+<pre class="prettyprint"><code class=" hljs python">
+user_keywords = Table(<span class="hljs-string">'user_keywords'</span>,
+                      BaseModel.metadata,
+                      Column(<span class="hljs-string">'user_id'</span>, Integer, ForeignKey(<span class="hljs-string">'user.id'</span>)),
+                      Column(<span class="hljs-string">'keyword_id'</span>, Integer, ForeignKey(<span class="hljs-string">'keyword.id'</span>))
+                      )
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">User</span><span class="hljs-params">(BaseModel)</span>:</span>
+    <span class="hljs-comment"># 表的名字:</span>
+    __tablename__ = <span class="hljs-string">'user'</span>
+
+    <span class="hljs-comment"># 表的结构:</span>
+    id = Column(Integer, primary_key=<span class="hljs-keyword">True</span>)
+    name = Column(String(<span class="hljs-number">20</span>), nullable=<span class="hljs-keyword">False</span>, unique=<span class="hljs-keyword">True</span>)
+    test = Column(String(<span class="hljs-number">20</span>), name=<span class="hljs-string">"a1"</span>, default=<span class="hljs-string">"a1"</span>)
+    email_address = Column(String(<span class="hljs-number">32</span>), nullable=<span class="hljs-keyword">False</span>, default=<span class="hljs-string">"email"</span>)
+    keywords = relation(<span class="hljs-string">"Keyword"</span>, secondary=user_keywords, backref=<span class="hljs-string">"user"</span>)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__repr__</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-string">'&lt;User id=%s,name=%s,test=%s,email_address=%s &gt;'</span> % (self.id, self.name, self.test, self.email_address)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Keyword</span><span class="hljs-params">(BaseModel)</span>:</span>
+    __tablename__ = <span class="hljs-string">'keyword'</span>
+
+    id = Column(Integer, primary_key=<span class="hljs-keyword">True</span>)
+    keyword = Column(String(<span class="hljs-number">20</span>), nullable=<span class="hljs-keyword">False</span>, unique=<span class="hljs-keyword">True</span>)
+    user = relation(<span class="hljs-string">"User"</span>, secondary=user_keywords, backref=<span class="hljs-string">"user"</span>)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__repr__</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-string">'&lt;User id=%s,keyword=%s&gt;'</span> % (self.id, self.keyword)</code></pre></div>
+
+</div>

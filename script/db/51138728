@@ -1,0 +1,92 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><p><strong>supervisor是用Python开发的一套通用的进程管理程序，能将一个普通的命令行进程变为后台daemon，并监控进程状态，异常退出时能自动重启。</strong></p>
+<h1 id="安装supervisor">安装supervisor</h1>
+<pre class="prettyprint"><code class=" hljs cs">apt-<span class="hljs-keyword">get</span> install supervisor</code></pre>
+<h1 id="配置">配置</h1>
+<h2 id="生成配置文件">生成配置文件</h2>
+<pre class="prettyprint"><code class=" hljs bash"><span class="hljs-built_in">echo</span>_supervisord_conf &gt; /etc/supervisord.conf</code></pre>
+<h2 id="添加自己的项目">添加自己的项目</h2>
+<p><strong>用一个my_tornado项目 测试</strong></p>
+<pre class="prettyprint"><code class=" hljs cs">vim /<span class="hljs-keyword">var</span>/www/my_tornado/app.py</code></pre>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">import</span> tornado.httpserver
+<span class="hljs-keyword">import</span> tornado.ioloop
+<span class="hljs-keyword">import</span> tornado.web
+<span class="hljs-keyword">import</span> tornado.options
+<span class="hljs-keyword">from</span> tornado.options <span class="hljs-keyword">import</span> define, options
+
+define(<span class="hljs-string">"port"</span>, default=<span class="hljs-number">8000</span>, help=<span class="hljs-string">"run on the given port"</span>, type=int)
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">IndexHandler</span><span class="hljs-params">(tornado.web.RequestHandler)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get</span><span class="hljs-params">(self)</span>:</span>
+        self.write(<span class="hljs-string">"Hello IndexHandler"</span>)
+
+settings = {  
+    <span class="hljs-string">"debug"</span>: <span class="hljs-keyword">True</span>,  
+}
+
+application = tornado.web.Application([  
+    (<span class="hljs-string">r"/"</span>, IndexHandler),
+], **settings)
+
+<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">"__main__"</span>:
+    http_server = tornado.httpserver.HTTPServer(application)  
+    tornado.options.parse_command_line()  
+    http_server.listen(options.port)
+    tornado.ioloop.IOLoop.instance().start()</code></pre>
+<pre class="prettyprint"><code class=" hljs makefile">vim /etc/supervisor/supervisord.conf
+.......
+<span class="hljs-comment">#添加一个项目</span>
+[group:tornados]
+<span class="hljs-constant">programs</span>=my_tornados
+
+[program:my_tornados]
+<span class="hljs-constant">numprocs</span>=8
+<span class="hljs-constant">numprocs_start</span>=1
+<span class="hljs-constant">command</span>=/home/hu/env/bin/python2.7 app.py --port=81%(process_num)02d
+<span class="hljs-constant">process_name</span>=%(program_name)s%(process_num)d
+<span class="hljs-constant">directory</span>=/var/www/my_tornado/
+<span class="hljs-constant">autorestart</span>=true
+<span class="hljs-constant">redirect_stderr</span>=true
+<span class="hljs-constant">stdout_logfile</span>=/tmp/my_tornados.log
+<span class="hljs-constant">stdout_logfile_maxbytes</span>=500MB
+<span class="hljs-constant">stdout_logfile_backups</span>=50
+<span class="hljs-constant">stderr_logfile</span>=/tmp/my_tornados.log
+<span class="hljs-constant">autostart</span>=true
+<span class="hljs-constant">loglevel</span>=info
+<span class="hljs-constant">user</span>=www-data
+</code></pre>
+<blockquote>
+<p>numprocs=8 每个tornado一个进程，端口从8101到8109 <br>
+  autorestart=true 自动启动 <br>
+  command 执行的命令</br></br></p>
+</blockquote>
+<h2 id="加载配置文件">加载配置文件</h2>
+<pre class="prettyprint"><code class=" hljs haskell"><span class="hljs-title">supervisorctl</span> reload
+
+<span class="hljs-title">hu</span>@ubuntu:/tmp/page/<span class="hljs-number">1460476800</span>$ ps -aux|grep python
+<span class="hljs-title">lp</span>        <span class="hljs-number">3450</span>  <span class="hljs-number">0.0</span>  <span class="hljs-number">0.2</span> <span class="hljs-number">136988</span> <span class="hljs-number">17140</span> ?        <span class="hljs-type">D</span>     <span class="hljs-number">4</span>月<span class="hljs-number">12</span>   <span class="hljs-number">0</span>:<span class="hljs-number">00</span> /usr/bin/python /usr/lib/cups/backend/hpfax
+<span class="hljs-title">root</span>     <span class="hljs-number">43021</span>  <span class="hljs-number">0.5</span>  <span class="hljs-number">0.1</span>  <span class="hljs-number">65888</span> <span class="hljs-number">15688</span> ?        <span class="hljs-type">Ss</span>   <span class="hljs-number">00</span>:<span class="hljs-number">33</span>   <span class="hljs-number">0</span>:<span class="hljs-number">10</span> /usr/bin/python /usr/local/bin/supervisord
+<span class="hljs-title">www</span>-<span class="hljs-typedef"><span class="hljs-keyword">data</span> 44217  0.2  0.2  62672 16620 ?        <span class="hljs-type">S</span>    00:58   0:01 /home/hu/env/bin/python2.7 app.py <span class="hljs-comment">--port=8108</span></span>
+<span class="hljs-title">www</span>-<span class="hljs-typedef"><span class="hljs-keyword">data</span> 44218  0.2  0.1  62416 16108 ?        <span class="hljs-type">S</span>    00:58   0:01 /home/hu/env/bin/python2.7 app.py <span class="hljs-comment">--port=8105</span></span>
+<span class="hljs-title">www</span>-<span class="hljs-typedef"><span class="hljs-keyword">data</span> 44219  0.2  0.1  62416 16180 ?        <span class="hljs-type">S</span>    00:58   0:01 /home/hu/env/bin/python2.7 app.py <span class="hljs-comment">--port=8104</span></span>
+<span class="hljs-title">www</span>-<span class="hljs-typedef"><span class="hljs-keyword">data</span> 44220  0.2  0.1  62416 16156 ?        <span class="hljs-type">S</span>    00:58   0:01 /home/hu/env/bin/python2.7 app.py <span class="hljs-comment">--port=8107</span></span>
+<span class="hljs-title">www</span>-<span class="hljs-typedef"><span class="hljs-keyword">data</span> 44221  0.2  0.1  62416 16164 ?        <span class="hljs-type">S</span>    00:58   0:01 /home/hu/env/bin/python2.7 app.py <span class="hljs-comment">--port=8106</span></span>
+<span class="hljs-title">www</span>-<span class="hljs-typedef"><span class="hljs-keyword">data</span> 44222  0.2  0.1  62416 16024 ?        <span class="hljs-type">S</span>    00:58   0:01 /home/hu/env/bin/python2.7 app.py <span class="hljs-comment">--port=8101</span></span>
+<span class="hljs-title">www</span>-<span class="hljs-typedef"><span class="hljs-keyword">data</span> 44223  0.2  0.1  62416 16016 ?        <span class="hljs-type">S</span>    00:58   0:01 /home/hu/env/bin/python2.7 app.py <span class="hljs-comment">--port=8103</span></span>
+<span class="hljs-title">www</span>-<span class="hljs-typedef"><span class="hljs-keyword">data</span> 44224  0.2  0.1  62416 16112 ?        <span class="hljs-type">S</span>    00:58   0:01 /home/hu/env/bin/python2.7 app.py <span class="hljs-comment">--port=8102</span></span>
+<span class="hljs-title">hu</span>       <span class="hljs-number">44469</span>  <span class="hljs-number">0.0</span>  <span class="hljs-number">0.0</span>  <span class="hljs-number">15980</span>  <span class="hljs-number">2096</span> pts/<span class="hljs-number">6</span>    <span class="hljs-type">S</span>+   <span class="hljs-number">01</span>:<span class="hljs-number">05</span>   <span class="hljs-number">0</span>:<span class="hljs-number">00</span> grep <span class="hljs-comment">--color=auto python</span>
+
+<span class="hljs-title">root</span>@ubuntu:/home/hu# curl http://localhost:<span class="hljs-number">8101</span>
+<span class="hljs-type">Hello</span> <span class="hljs-type">IndexHandler</span>
+<span class="hljs-title">root</span>@ubuntu:/home/hu# 
+</code></pre>
+<pre class="prettyprint"><code class=" hljs vala"><span class="hljs-preprocessor">#查看状态</span>
+supervisorctl status
+<span class="hljs-preprocessor">#停止服务</span>
+supervisorctl stop tornados:
+<span class="hljs-preprocessor">#启动服务</span>
+supervisorctl start tornados:
+<span class="hljs-preprocessor">#其他的命令</span>
+supervisorctl help</code></pre></div>
+
+</div>

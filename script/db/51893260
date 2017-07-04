@@ -1,0 +1,64 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="环境">环境</h1>
+<p>Ubuntu 14.04.4 LTS</p>
+<h2 id="安装-brctl-网桥">安装 brctl 网桥</h2>
+<pre class="prettyprint"><code class=" hljs lasso">apt<span class="hljs-attribute">-get</span> install bridge<span class="hljs-attribute">-utils</span></code></pre>
+<h2 id="以netnone的方式启动一个container">以–net=’none’的方式启动一个container</h2>
+<pre class="prettyprint"><code class=" hljs brainfuck"><span class="hljs-comment">docker</span> <span class="hljs-comment">run</span> <span class="hljs-literal">-</span><span class="hljs-comment">i</span> <span class="hljs-literal">-</span><span class="hljs-comment">t</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">name=net</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">hostname=net</span> <span class="hljs-literal">-</span><span class="hljs-literal">-</span><span class="hljs-comment">net='none'</span>  <span class="hljs-comment">ubuntu:ssh</span> <span class="hljs-comment">/bin/bash</span></code></pre>
+<pre class="prettyprint"><code class=" hljs ruby">root<span class="hljs-variable">@net</span><span class="hljs-symbol">:/</span><span class="hljs-comment"># ifconfig </span>
+lo        <span class="hljs-constant">Link</span> <span class="hljs-symbol">encap:</span><span class="hljs-constant">Local</span> <span class="hljs-constant">Loopback</span>  
+          inet <span class="hljs-symbol">addr:</span><span class="hljs-number">127.0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">1</span>  <span class="hljs-constant">Mask</span><span class="hljs-symbol">:</span><span class="hljs-number">255.0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">0</span>
+          inet6 <span class="hljs-symbol">addr:</span> <span class="hljs-symbol">:</span><span class="hljs-symbol">:</span><span class="hljs-number">1</span>/<span class="hljs-number">128</span> <span class="hljs-constant">Scope</span><span class="hljs-symbol">:Host</span>
+          <span class="hljs-constant">UP</span> <span class="hljs-constant">LOOPBACK</span> <span class="hljs-constant">RUNNING</span>  <span class="hljs-constant">MTU</span><span class="hljs-symbol">:</span><span class="hljs-number">65536</span>  <span class="hljs-constant">Metric</span><span class="hljs-symbol">:</span><span class="hljs-number">1</span>
+          <span class="hljs-constant">RX</span> <span class="hljs-symbol">packets:</span><span class="hljs-number">0</span> <span class="hljs-symbol">errors:</span><span class="hljs-number">0</span> <span class="hljs-symbol">dropped:</span><span class="hljs-number">0</span> <span class="hljs-symbol">overruns:</span><span class="hljs-number">0</span> <span class="hljs-symbol">frame:</span><span class="hljs-number">0</span>
+          <span class="hljs-constant">TX</span> <span class="hljs-symbol">packets:</span><span class="hljs-number">0</span> <span class="hljs-symbol">errors:</span><span class="hljs-number">0</span> <span class="hljs-symbol">dropped:</span><span class="hljs-number">0</span> <span class="hljs-symbol">overruns:</span><span class="hljs-number">0</span> <span class="hljs-symbol">carrier:</span><span class="hljs-number">0</span>
+          <span class="hljs-symbol">collisions:</span><span class="hljs-number">0</span> <span class="hljs-symbol">txqueuelen:</span><span class="hljs-number">0</span> 
+          <span class="hljs-constant">RX</span> <span class="hljs-symbol">bytes:</span><span class="hljs-number">0</span> (<span class="hljs-number">0</span>.<span class="hljs-number">0</span> <span class="hljs-constant">B</span>)  <span class="hljs-constant">TX</span> <span class="hljs-symbol">bytes:</span><span class="hljs-number">0</span> (<span class="hljs-number">0</span>.<span class="hljs-number">0</span> <span class="hljs-constant">B</span>)
+</code></pre>
+<blockquote>
+<p>使用’none’模式，container中没有获取到IP，甚至连网卡都没有</p>
+</blockquote>
+<h3 id="首先找到id-通过id找到进程pid">首先找到ID 通过ID找到进程Pid</h3>
+<pre class="prettyprint"><code class=" hljs bash">docker ps <span class="hljs-operator">-a</span>                                   
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+eaadcd10ca44        ubuntu:ssh          <span class="hljs-string">"/bin/bash"</span>         <span class="hljs-number">4</span> minutes ago       Up <span class="hljs-number">4</span> minutes                            net
+
+docker inspect <span class="hljs-operator">-f</span> <span class="hljs-string">"{{.State.Pid}}"</span> eaadcd10ca44
+
+<span class="hljs-number">10711</span></code></pre>
+<h3 id="以容器的id创建一个网卡">以容器的ID创建一个网卡</h3>
+<pre class="prettyprint"><code class=" hljs fsharp">ip link add veth_eaadc <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">veth</span> <span class="hljs-title">peer</span> <span class="hljs-title">name</span> <span class="hljs-title">eaadcd10ca44</span></span></code></pre>
+<h3 id="把网卡绑定到-docker0">把网卡绑定到 docker0</h3>
+<pre class="prettyprint"><code class=" hljs ">brctl addif docker0 veth_eaadc</code></pre>
+<h3 id="启动网卡">启动网卡</h3>
+<pre class="prettyprint"><code class=" hljs lasso">ip <span class="hljs-keyword">link</span> <span class="hljs-built_in">set</span> veth_eaadc up
+ip <span class="hljs-keyword">link</span> <span class="hljs-built_in">set</span> eaadcd10ca44 netns <span class="hljs-number">10711</span></code></pre>
+<pre class="prettyprint"><code class=" hljs cs"><span class="hljs-preprocessor">#容器内部的已经有网卡了，只是没IP</span>
+root@net:/<span class="hljs-preprocessor"># ip a</span>
+<span class="hljs-number">1</span>: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu <span class="hljs-number">65536</span> qdisc noqueue state UNKNOWN <span class="hljs-keyword">group</span> <span class="hljs-keyword">default</span> 
+    link/loopback <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span> brd <span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>:<span class="hljs-number">00</span>
+    inet <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>/<span class="hljs-number">8</span> scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::<span class="hljs-number">1</span>/<span class="hljs-number">128</span> scope host 
+       valid_lft forever preferred_lft forever
+<span class="hljs-number">28</span>: eaadcd10ca44@if29: &lt;BROADCAST,MULTICAST&gt; mtu <span class="hljs-number">1500</span> qdisc noop state DOWN <span class="hljs-keyword">group</span> <span class="hljs-keyword">default</span> qlen <span class="hljs-number">1000</span>
+    link/ether a2:<span class="hljs-number">25</span>:<span class="hljs-number">7</span>d:d1:<span class="hljs-number">2</span>b:e5 brd ff:ff:ff:ff:ff:ff
+</code></pre>
+<h3 id="配置容器网卡">配置容器网卡</h3>
+<pre class="prettyprint"><code class=" hljs sql">mkdir -p /var/run/netns/
+ln -s /proc/10711/ns/net /var/run/netns/10711
+
+ip netns exec 10711 ip link <span class="hljs-operator"><span class="hljs-keyword">set</span> dev eaadcd10ca44 name eth0
+
+ip netns <span class="hljs-keyword">exec</span> <span class="hljs-number">10711</span> ip link <span class="hljs-keyword">set</span> eth0 up
+
+ip netns <span class="hljs-keyword">exec</span> <span class="hljs-number">10711</span> ip addr <span class="hljs-keyword">add</span> <span class="hljs-number">172.17</span><span class="hljs-number">.111</span><span class="hljs-number">.3</span>/<span class="hljs-number">16</span> dev eth0
+
+ip netns <span class="hljs-keyword">exec</span> <span class="hljs-number">10711</span> ip route <span class="hljs-keyword">add</span> <span class="hljs-keyword">default</span> via <span class="hljs-number">172.17</span><span class="hljs-number">.42</span><span class="hljs-number">.1</span></span></code></pre>
+<blockquote>
+<p>172.17.42.1 为docker0的IP  </p>
+</blockquote>
+<p>配置完成。</p>
+<p><strong>容器重启需要重新配置，因为PID变了</strong></p></div>
+
+</div>

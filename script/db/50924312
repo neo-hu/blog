@@ -1,0 +1,204 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="环境">环境</h1>
+<p>Ubuntu 14.04.4 LTS *3 分别是master1(192.168.42.28), master2(192.168.42.29), slave1(192.168.42.33)测试下只有master1有从</p>
+<h1 id="配置">配置</h1>
+<pre class="prettyprint"><code class=" hljs r">vim /etc/mysql/my.cnf 
+<span class="hljs-comment">#必要的配置</span>
+[mysqld]
+<span class="hljs-keyword">...</span>
+bind-address            = <span class="hljs-number">0.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span>
+<span class="hljs-comment">#3台主机的id分别是 1,2,3</span>
+server-id               = <span class="hljs-number">1</span> 
+
+binlog-do-db=test <span class="hljs-comment">#需要记录二进制日志的数据库.如果有多个数据库可用逗号分隔,或者使用多个binlog-do-db选项 </span>
+<span class="hljs-comment">#需要同步的数据库 </span>
+replicate-do-db=test <span class="hljs-comment">#需要进行同步的数据库.如果有多个数据库可用逗号分隔,或者使用多个binlog-do-db选项 </span>
+
+log_bin                 = /var/log/mysql/mysql-bin.log
+<span class="hljs-comment">#这很主要，不然没办法做主从</span>
+log-slave-updates
+<span class="hljs-keyword">...</span></code></pre>
+<h2 id="同步数据">同步数据</h2>
+<p>我使用的是 <a href="http://blog.csdn.net/u010066807/article/details/50679276">innobackupex</a> 同步，也可以mysqldump。 <br>
+master1 master2 slave1都需要同步</br></p>
+<h3 id="master1-配置">master1 配置</h3>
+<pre class="prettyprint"><code class=" hljs asciidoc">#给master2权限
+grant replication slave,file on <span class="hljs-strong">*.*</span> to <span class="hljs-emphasis">'slave'</span>@<span class="hljs-emphasis">'192.168.42.29'</span> identified by <span class="hljs-emphasis">'123123'</span>;
+#给slave1权限
+grant replication slave,file on <span class="hljs-strong">*.*</span> to <span class="hljs-emphasis">'slave'</span>@<span class="hljs-emphasis">'192.168.42.33'</span> identified by <span class="hljs-emphasis">'123123'</span>;
+
+stop slave; 
+<span class="hljs-header">show master status;
++------------------+----------+--------------+------------------+</span>
+<span class="hljs-header">| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB |
++------------------+----------+--------------+------------------+</span>
+<span class="hljs-header">| mysql-bin.000007 |      723 | test         |                  |
++------------------+----------+--------------+------------------+</span>
+
+change master to master<span class="hljs-emphasis">_host='192.168.42.29',master_</span>user=<span class="hljs-emphasis">'slave'</span>,master<span class="hljs-emphasis">_password='123123',master_</span>log<span class="hljs-emphasis">_file='mysql-bin.000008', master_</span>log<span class="hljs-emphasis">_pos=267,master_</span>connect<span class="hljs-emphasis">_retry=10; #mysql-bin.000008和267是master2的状态 
+#参数
+#master_</span>connect<span class="hljs-emphasis">_retry默认60秒，重连的时间，如果断开就60秒从试,直到链接上
+#master_</span>log<span class="hljs-emphasis">_pos，master_</span>log<span class="hljs-emphasis">_file为复制主机的show master status的值
+
+</span>
+#启动复制
+start slave;
+#查看状态
+show slave status\G; 
+
+<span class="hljs-bullet">*************************** </span>1. row ***************************
+<span class="hljs-code">               Slave_IO_State: Waiting for master to send event</span>
+<span class="hljs-code">                  Master_Host: 192.168.42.29</span>
+<span class="hljs-code">                  Master_User: slave</span>
+<span class="hljs-code">                  Master_Port: 3306</span>
+<span class="hljs-code">                Connect_Retry: 60</span>
+<span class="hljs-code">              Master_Log_File: mysql-bin.000008</span>
+<span class="hljs-code">          Read_Master_Log_Pos: 267</span>
+<span class="hljs-code">               Relay_Log_File: mysqld-relay-bin.000002</span>
+<span class="hljs-code">                Relay_Log_Pos: 253</span>
+<span class="hljs-code">        Relay_Master_Log_File: mysql-bin.000008</span>
+<span class="hljs-code">             Slave_IO_Running: Yes #显示YES配置成功</span>
+<span class="hljs-code">            Slave_SQL_Running: Yes</span>
+<span class="hljs-code">              Replicate_Do_DB: test</span>
+<span class="hljs-code">          Replicate_Ignore_DB: </span>
+<span class="hljs-code">           Replicate_Do_Table: </span>
+<span class="hljs-code">       Replicate_Ignore_Table: </span>
+<span class="hljs-code">      Replicate_Wild_Do_Table: </span>
+<span class="hljs-code">  Replicate_Wild_Ignore_Table: </span>
+<span class="hljs-code">                   Last_Errno: 0</span>
+<span class="hljs-code">                   Last_Error: </span>
+<span class="hljs-code">                 Skip_Counter: 0</span>
+<span class="hljs-code">          Exec_Master_Log_Pos: 267</span>
+<span class="hljs-code">              Relay_Log_Space: 410</span>
+<span class="hljs-code">              Until_Condition: None</span>
+<span class="hljs-code">               Until_Log_File: </span>
+<span class="hljs-code">                Until_Log_Pos: 0</span>
+<span class="hljs-code">           Master_SSL_Allowed: No</span>
+<span class="hljs-code">           Master_SSL_CA_File: </span>
+<span class="hljs-code">           Master_SSL_CA_Path: </span>
+<span class="hljs-code">              Master_SSL_Cert: </span>
+<span class="hljs-code">            Master_SSL_Cipher: </span>
+<span class="hljs-code">               Master_SSL_Key: </span>
+<span class="hljs-code">        Seconds_Behind_Master: 0</span>
+Master<span class="hljs-emphasis">_SSL_</span>Verify<span class="hljs-emphasis">_Server_</span>Cert: No
+<span class="hljs-code">                Last_IO_Errno: 0</span>
+<span class="hljs-code">                Last_IO_Error: </span>
+<span class="hljs-code">               Last_SQL_Errno: 0</span>
+<span class="hljs-code">               Last_SQL_Error: </span>
+<span class="hljs-code">  Replicate_Ignore_Server_Ids: </span>
+<span class="hljs-code">             Master_Server_Id: 2</span>
+1 row in set (0.00 sec)</code></pre>
+<h3 id="master2-配置">master2 配置</h3>
+<pre class="prettyprint"><code class=" hljs asciidoc">#给master2权限
+grant replication slave,file on <span class="hljs-strong">*.*</span> to <span class="hljs-emphasis">'slave'</span>@<span class="hljs-emphasis">'192.168.42.28'</span> identified by <span class="hljs-emphasis">'123123'</span>;
+
+stop slave; 
+<span class="hljs-header">show master status;
++------------------+----------+--------------+------------------+</span>
+<span class="hljs-header">| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB |
++------------------+----------+--------------+------------------+</span>
+<span class="hljs-header">| mysql-bin.000008 |      267 | test         |                  |
++------------------+----------+--------------+------------------+</span>
+
+change master to master<span class="hljs-emphasis">_host='192.168.42.28',master_</span>user=<span class="hljs-emphasis">'slave'</span>,master<span class="hljs-emphasis">_password='123123',master_</span>log<span class="hljs-emphasis">_file='mysql-bin.000007', master_</span>log<span class="hljs-emphasis">_pos=723; 
+#启动复制
+start slave;
+#查看状态
+show slave status\G; 
+
+</span><span class="hljs-bullet">*************************** </span>1. row ***************************
+<span class="hljs-code">               Slave_IO_State: Waiting for master to send event</span>
+<span class="hljs-code">                  Master_Host: 192.168.42.28</span>
+<span class="hljs-code">                  Master_User: slave</span>
+<span class="hljs-code">                  Master_Port: 3306</span>
+<span class="hljs-code">                Connect_Retry: 60</span>
+<span class="hljs-code">              Master_Log_File: mysql-bin.000007</span>
+<span class="hljs-code">          Read_Master_Log_Pos: 723</span>
+<span class="hljs-code">               Relay_Log_File: mysqld-relay-bin.000002</span>
+<span class="hljs-code">                Relay_Log_Pos: 253</span>
+<span class="hljs-code">        Relay_Master_Log_File: mysql-bin.000007</span>
+<span class="hljs-code">             Slave_IO_Running: Yes</span>
+<span class="hljs-code">            Slave_SQL_Running: Yes</span>
+<span class="hljs-code">              Replicate_Do_DB: test</span>
+<span class="hljs-code">          Replicate_Ignore_DB: </span>
+<span class="hljs-code">           Replicate_Do_Table: </span>
+<span class="hljs-code">       Replicate_Ignore_Table: </span>
+<span class="hljs-code">      Replicate_Wild_Do_Table: </span>
+<span class="hljs-code">  Replicate_Wild_Ignore_Table: </span>
+<span class="hljs-code">                   Last_Errno: 0</span>
+<span class="hljs-code">                   Last_Error: </span>
+<span class="hljs-code">                 Skip_Counter: 0</span>
+<span class="hljs-code">          Exec_Master_Log_Pos: 723</span>
+<span class="hljs-code">              Relay_Log_Space: 410</span>
+<span class="hljs-code">              Until_Condition: None</span>
+<span class="hljs-code">               Until_Log_File: </span>
+<span class="hljs-code">                Until_Log_Pos: 0</span>
+<span class="hljs-code">           Master_SSL_Allowed: No</span>
+<span class="hljs-code">           Master_SSL_CA_File: </span>
+<span class="hljs-code">           Master_SSL_CA_Path: </span>
+<span class="hljs-code">              Master_SSL_Cert: </span>
+<span class="hljs-code">            Master_SSL_Cipher: </span>
+<span class="hljs-code">               Master_SSL_Key: </span>
+<span class="hljs-code">        Seconds_Behind_Master: 0</span>
+Master<span class="hljs-emphasis">_SSL_</span>Verify<span class="hljs-emphasis">_Server_</span>Cert: No
+<span class="hljs-code">                Last_IO_Errno: 0</span>
+<span class="hljs-code">                Last_IO_Error: </span>
+<span class="hljs-code">               Last_SQL_Errno: 0</span>
+<span class="hljs-code">               Last_SQL_Error: </span>
+<span class="hljs-code">  Replicate_Ignore_Server_Ids: </span>
+<span class="hljs-code">             Master_Server_Id: 1</span></code></pre>
+<h3 id="slave1-配置">slave1 配置</h3>
+<pre class="prettyprint"><code class=" hljs markdown">
+stop slave; 
+
+change master to master<span class="hljs-emphasis">_host='192.168.42.28',master_</span>user='slave',master<span class="hljs-emphasis">_password='123123',master_</span>log<span class="hljs-emphasis">_file='mysql-bin.000007', master_</span>log_pos=723; 
+
+show slave status\G  
+
+<span class="hljs-strong">*****</span><span class="hljs-strong">*****</span><span class="hljs-strong">*****</span><span class="hljs-strong">*****</span><span class="hljs-strong">*****</span><span class="hljs-strong">** 1. row **</span><span class="hljs-strong">*****</span><span class="hljs-strong">*****</span><span class="hljs-strong">*****</span><span class="hljs-strong">*****</span><span class="hljs-strong">*****</span>
+<span class="hljs-code">               Slave_IO_State: Waiting for master to send event</span>
+<span class="hljs-code">                  Master_Host: 192.168.42.28</span>
+<span class="hljs-code">                  Master_User: slave</span>
+<span class="hljs-code">                  Master_Port: 3306</span>
+<span class="hljs-code">                Connect_Retry: 60</span>
+<span class="hljs-code">              Master_Log_File: mysql-bin.000007</span>
+<span class="hljs-code">          Read_Master_Log_Pos: 883</span>
+<span class="hljs-code">               Relay_Log_File: mysqld-relay-bin.000002</span>
+<span class="hljs-code">                Relay_Log_Pos: 253</span>
+<span class="hljs-code">        Relay_Master_Log_File: mysql-bin.000007</span>
+<span class="hljs-code">             Slave_IO_Running: Yes</span>
+<span class="hljs-code">            Slave_SQL_Running: Yes</span>
+<span class="hljs-code">              Replicate_Do_DB: </span>
+<span class="hljs-code">          Replicate_Ignore_DB: </span>
+<span class="hljs-code">           Replicate_Do_Table: </span>
+<span class="hljs-code">       Replicate_Ignore_Table: </span>
+<span class="hljs-code">      Replicate_Wild_Do_Table: </span>
+  Replicate<span class="hljs-emphasis">_Wild_</span>Ignore_Table: 
+<span class="hljs-code">                   Last_Errno: 0</span>
+<span class="hljs-code">                   Last_Error: </span>
+<span class="hljs-code">                 Skip_Counter: 0</span>
+<span class="hljs-code">          Exec_Master_Log_Pos: 883</span>
+<span class="hljs-code">              Relay_Log_Space: 410</span>
+<span class="hljs-code">              Until_Condition: None</span>
+<span class="hljs-code">               Until_Log_File: </span>
+<span class="hljs-code">                Until_Log_Pos: 0</span>
+<span class="hljs-code">           Master_SSL_Allowed: No</span>
+<span class="hljs-code">           Master_SSL_CA_File: </span>
+<span class="hljs-code">           Master_SSL_CA_Path: </span>
+<span class="hljs-code">              Master_SSL_Cert: </span>
+<span class="hljs-code">            Master_SSL_Cipher: </span>
+<span class="hljs-code">               Master_SSL_Key: </span>
+<span class="hljs-code">        Seconds_Behind_Master: 0</span>
+Master<span class="hljs-emphasis">_SSL_</span>Verify<span class="hljs-emphasis">_Server_</span>Cert: No
+<span class="hljs-code">                Last_IO_Errno: 0</span>
+<span class="hljs-code">                Last_IO_Error: </span>
+<span class="hljs-code">               Last_SQL_Errno: 0</span>
+<span class="hljs-code">               Last_SQL_Error: </span>
+  Replicate<span class="hljs-emphasis">_Ignore_</span>Server_Ids: 
+<span class="hljs-code">             Master_Server_Id: 1</span></code></pre>
+<h3 id="测试">测试</h3>
+<p>分别在master1,master2 插入数据，在查看3个主机的数据</p>
+<h1 id="未解决的问题">未解决的问题</h1>
+<p><strong>当前状态最多能有2台是主</strong></p></div>
+
+</div>

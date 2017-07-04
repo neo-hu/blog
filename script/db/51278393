@@ -1,0 +1,22 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><pre class="prettyprint"><code class=" hljs lasso">sudo apt<span class="hljs-attribute">-get</span> install libboost<span class="hljs-attribute">-all</span><span class="hljs-attribute">-dev</span>
+sudo apt<span class="hljs-attribute">-get</span> install aptitude
+pip install <span class="hljs-attribute">-v</span> pyv8</code></pre>
+<p>或:</p>
+<pre class="prettyprint"><code class=" hljs bash"><span class="hljs-built_in">sudo</span> apt-get install scons libboost-python-dev
+
+svn checkout http://v8.googlecode.com/svn/trunk/ v8
+
+svn checkout http://pyv8.googlecode.com/svn/trunk/ pyv8
+
+<span class="hljs-built_in">cd</span> v8
+
+<span class="hljs-keyword">export</span> V8_HOME=`/home/buffer/v8`
+
+<span class="hljs-built_in">cd</span> ../pyv8
+
+<span class="hljs-built_in">sudo</span> python setup.py build
+
+<span class="hljs-built_in">sudo</span> python setup.py install</code></pre></div>
+
+</div>
