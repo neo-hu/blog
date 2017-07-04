@@ -1,0 +1,130 @@
+.main-content {
+  position: fixed;
+  z-index: 55;
+  top: 65px;
+  left: 65px;
+  right: 65px;
+  bottom: 65px;
+  background: #FFF;
+  -webkit-box-shadow: 0 0 60px 0 rgba(0, 0, 0, 0.18);
+  -moz-box-shadow: 0 0 60px 0 rgba(0, 0, 0, 0.18);
+  box-shadow: 0 0 60px 0 rgba(0, 0, 0, 0.18); }
+  .main-content .router-content {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    overflow-y: auto;
+    left: 0;
+    width: 100%; }
+  .main-content .menu-btn {
+    position: absolute;
+    height: 64px;
+    width: 64px;
+    line-height: 64px;
+    border-radius: 50%;
+    -webkit-box-shadow: 0 3px 15px 0 rgba(0, 0, 0, 0.18);
+    -moz-box-shadow: 0 3px 15px 0 rgba(0, 0, 0, 0.18);
+    box-shadow: 0 3px 15px 0 rgba(0, 0, 0, 0.18);
+    top: 50%;
+    margin-top: -32px;
+    left: -32px;
+    display: block;
+    overflow: hidden;
+    text-align: center;
+    z-index: 999;
+    -webkit-transition: all .3s ease;
+    -moz-transition: all .3s ease;
+    transition: all .3s ease;
+    cursor: pointer; }
+    .main-content .menu-btn.show-menu > .lines > span.l2 {
+      opacity: 0; }
+    .main-content .menu-btn.show-menu > .lines > span.l1 {
+      -webkit-transform: rotate(45deg);
+      -moz-transform: rotate(45deg);
+      -ms-transform: rotate(45deg);
+      -o-transform: rotate(45deg);
+      transform: rotate(45deg);
+      top: 50%;
+      margin-top: -2px; }
+    .main-content .menu-btn.show-menu > .lines > span.l3 {
+      -webkit-transform: rotate(-45deg);
+      -moz-transform: rotate(-45deg);
+      -ms-transform: rotate(-45deg);
+      -o-transform: rotate(-45deg);
+      transform: rotate(-45deg);
+      top: 50%;
+      margin-top: -2px; }
+    .main-content .menu-btn > .lines {
+      vertical-align: middle;
+      display: inline-block;
+      height: 32px;
+      width: 32px;
+      position: relative; }
+      .main-content .menu-btn > .lines > span {
+        position: absolute;
+        left: 0;
+        display: block;
+        height: 4px;
+        border-radius: 2px;
+        width: 32px;
+        margin: auto;
+        background: #FFF;
+        -webkit-transition: all .3s ease;
+        -moz-transition: all .3s ease;
+        transition: all .3s ease; }
+        .main-content .menu-btn > .lines > span.l1 {
+          top: 5px; }
+        .main-content .menu-btn > .lines > span.l2 {
+          top: 14px; }
+        .main-content .menu-btn > .lines > span.l3 {
+          top: 23px; }
+  .main-content .menu-content {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    text-align: center;
+    -webkit-transform: translate3d(0, -50%, 0);
+    -moz-transform: translate3d(0, -50%, 0);
+    -ms-transform: translate3d(0, -50%, 0);
+    -o-transform: translate3d(0, -50%, 0);
+    transform: translate3d(0, -50%, 0);
+    z-index: 99;
+    display: none; }
+    .main-content .menu-content.show-menu {
+      display: block; }
+    .main-content .menu-content li {
+      color: #B6B6B6;
+      margin: 28px;
+      position: relative;
+      padding: 0; }
+      .main-content .menu-content li a {
+        color: inherit;
+        text-decoration: none; }
+        .main-content .menu-content li a span {
+          font-weight: bold;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          font-size: 14px;
+          margin-top: 12px;
+          display: block;
+          color: #B6B6B6;
+          position: relative;
+          z-index: 9;
+          -webkit-transition: all .3s ease;
+          -moz-transition: all .3s ease;
+          transition: all .3s ease; }
+        .main-content .menu-content li a i {
+          color: #292b2c;
+          display: block;
+          height: 130px;
+          width: 130px;
+          line-height: 130px;
+          font-size: 58px;
+          vertical-align: middle;
+          background: #F0F0F0;
+          -webkit-transition: all .3s ease;
+          -moz-transition: all .3s ease;
+          transition: all .3s ease;
+          border-radius: 50%; }
+
+/*# sourceMappingURL=app.component.css.map */

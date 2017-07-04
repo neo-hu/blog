@@ -1,0 +1,41 @@
+<div class="skills p-lg-5rem p-4 router-content">
+  <div class="skills-icon pb-4">
+    <div class="row text-center">
+      <div class="col-sm">
+        <i class="fa fa-picture-o hover-color-tc"></i>
+        <span>作品</span>
+      </div>
+      <div class="col-sm-1 operator align-items-center d-flex justify-content-center">
+        <div>=</div>
+      </div>
+      <div class="col-sm">
+        <i class="fa fa-lightbulb-o hover-color-tc"></i>
+        <span>想法</span>
+      </div>
+      <div class="col-sm-1 operator align-items-center d-flex justify-content-center">
+        <div>+</div>
+      </div>
+      <div class="col-sm">
+        <i class="fa fa-users hover-color-tc"></i>
+        <span>团队</span>
+      </div>
+      <div class="col-sm-1 operator align-items-center d-flex justify-content-center">
+        <div>+</div>
+      </div>
+      <div class="col-sm">
+        <i class="fa fa-clock-o hover-color-tc"></i>
+        <span>时间</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>MY SKILLS</h3>
+  <p>“我一直深信不疑,术业有专攻;工欲善其事,必先利其器;”</p>
+  <div class="d-flex flex-wrap">
+    <div *ngFor="let skill of skills" class="px-4" >
+      <div [circle-progress]="skill.progress" style="width: 130px; height: 130px"></div>
+      <p class="text-center pt-2">{{skill.name}}</p>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,135 @@
+@font-face {
+  font-family: 'LicensePlate';
+  src: url("./font/licenseplate-webfont.eot");
+  src: url("./font/licenseplate-webfont.eot?#iefix") format("embedded-opentype"), url("./font/licenseplate-webfont.woff") format("woff"), url("./font/licenseplate-webfont.ttf") format("truetype"), url("./font/licenseplate-webfont.svg#license_plateregular") format("svg");
+  font-weight: normal;
+  font-style: normal; }
+#bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  z-index: -1; }
+  #bg:before {
+    content: ' ';
+    position: absolute;
+    height: 100%;
+    margin-top: -260px;
+    width: 600px;
+    background: #FFF;
+    z-index: 2;
+    -webkit-transform: rotate(45deg);
+    -moz-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    -o-transform: rotate(45deg);
+    transform: rotate(45deg);
+    background: url("images/img2.jpg"); }
+
+@media (min-width: 992px) {
+  .p-lg-5rem {
+    padding: 5rem !important; } }
+.circle {
+  width: 200px;
+  height: 200px;
+  position: absolute;
+  border-radius: 50%;
+  background: #0cc; }
+  .circle .left, .circle .right {
+    width: 200px;
+    height: 200px;
+    position: absolute;
+    top: 0;
+    left: 0; }
+  .circle .pie_left {
+    background: red; }
+  .circle .pie_left, .circle .pie_right {
+    width: 200px;
+    height: 200px;
+    position: absolute;
+    border-radius: 50%;
+    top: 0;
+    left: 0; }
+  .circle .pie_right {
+    transform: rotate(30deg); }
+  .circle .pie_right, .circle .right {
+    clip: rect(0, auto, auto, 100px); }
+  .circle .pie_left, .circle .left {
+    clip: rect(0, 100px, auto, 0); }
+
+body .bg {
+  background-color: #2b9eb1; }
+body .bgc {
+  background-color: #2b9eb1; }
+body #bg {
+  background-color: #2b9eb1; }
+
+body[theme=r1] .bg {
+  background-color: #645b5c; }
+body[theme=r1] .bgc {
+  background-color: #645b5c;
+  background-image: url("images/theme_bg_1.jpg");
+  background-repeat: repeat;
+  background-position: center; }
+body[theme=r1] #bg {
+  background-color: #645b5c;
+  background-image: url("images/theme_bg_1.jpg");
+  background-repeat: repeat;
+  background-position: center; }
+body[theme=r1] .menu-btn {
+  box-shadow: -1px -1px 3px rgba(0, 0, 0, 0.2), 2px 2px 10px rgba(0, 0, 0, 0.6), inset 2px 2px 0 rgba(255, 255, 255, 0.1); }
+
+body[theme=t1] .bg {
+  background-color: #ca0d86; }
+body[theme=t1] .bgc {
+  background-color: #ca0d86;
+  background-image: url("images/theme_bg_2.png");
+  background-repeat: repeat;
+  background-position: center; }
+body[theme=t1] #bg {
+  background-color: #ca0d86;
+  background-image: url("images/theme_bg_2.png");
+  background-repeat: repeat;
+  background-position: center; }
+
+body[theme=t2] .bg {
+  background-color: #764394; }
+body[theme=t2] .bgc {
+  background-color: #764394;
+  background-image: url("images/theme_bg_2.png");
+  background-repeat: repeat;
+  background-position: center; }
+body[theme=t2] #bg {
+  background-color: #764394;
+  background-image: url("images/theme_bg_2.png");
+  background-repeat: repeat;
+  background-position: center; }
+
+body[theme=t3] .bg {
+  background-color: #e1483f; }
+body[theme=t3] .bgc {
+  background-color: #e1483f;
+  background-image: url("images/theme_bg_2.png");
+  background-repeat: repeat;
+  background-position: center; }
+body[theme=t3] #bg {
+  background-color: #e1483f;
+  background-image: url("images/theme_bg_2.png");
+  background-repeat: repeat;
+  background-position: center; }
+
+body[theme=t4] .bg {
+  background-color: #7de87d; }
+body[theme=t4] .bgc {
+  background-color: #7de87d;
+  background-image: url("images/theme_bg_2.png");
+  background-repeat: repeat;
+  background-position: center; }
+body[theme=t4] #bg {
+  background-color: #7de87d;
+  background-image: url("images/theme_bg_2.png");
+  background-repeat: repeat;
+  background-position: center; }
+
+/*# sourceMappingURL=styles.css.map */

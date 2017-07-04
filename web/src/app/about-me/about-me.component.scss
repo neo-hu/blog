@@ -1,0 +1,289 @@
+
+.about-me {
+  .info {
+    z-index: 110;
+    position: absolute;
+    bottom: 30px;
+    right: 0;
+    width: 100%;
+    .t-bg {
+      border-radius: 3px;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+      padding: 4px 10px;
+      color: #fff;
+      display: inline-block;
+    }
+    div {
+      margin-bottom: 10px;
+    }
+    .t-v {
+      line-height: 30px;
+    }
+  }
+
+@media (min-width: 1200px) {
+  .info{
+    width: 30%;
+  }
+}
+@media (max-width: 575px) {
+  .info{
+    position: relative;
+    padding-left: 10px;
+    bottom: auto;
+    top:10px;
+    div {
+      margin-bottom: 2px;
+    }
+  }
+}
+  .tree {
+    max-width: 980px;
+    width: 100%;
+    background: transparent url("../../images/menu.png") no-repeat 50% 0;
+    min-height: 695px;
+    z-index: 100;
+    margin: 60px 0 0 60px;
+    position: absolute;
+    bottom: 20px;
+    div {
+      -webkit-animation: rotate-rl 3s ease-in-out infinite alternate;
+      -moz-animation: rotate-rl 3s ease-in-out infinite alternate;
+      animation: rotate-rl 3s ease-in-out infinite alternate;
+      &:nth-child(1) {
+        position: absolute;
+        bottom: 246px;
+        right: 118px;
+      }
+      &:nth-child(1) a {
+        display: block;
+        color: #145b9b;
+        font-size: 80.93px;
+      }
+      &:nth-child(2) {
+        position: absolute;
+        top: 284px;
+        left: 189px;
+      }
+      &:nth-child(2) a {
+        color: #588ba4;
+        font-size: 74.71px;
+      }
+      &:nth-child(3) {
+        position: absolute;
+        bottom: 319px;
+        right: 321px;
+      }
+      &:nth-child(3) a {
+        color: #00a4be;
+        font-size: 84.77px;
+      }
+      &:nth-child(4) {
+        position: absolute;
+        top: 220px;
+        right: 338px;
+      }
+      &:nth-child(4) a {
+        font-size: 53.2px;
+      }
+    }
+    a {
+      line-height: 22px;
+      font-weight: bold;
+      font-family: 'LicensePlate';
+      text-transform: uppercase;
+      text-decoration: none;
+      display: block;
+      &:hover {
+        text-decoration: none;
+        -webkit-transform: scale(1.2);
+        -moz-transform: scale(1.2);
+        -o-transform: scale(1.2);
+        transform: scale(1.2);
+        -webkit-transition: all 1s ease-in-out;
+        -moz-transition: all 1s ease-in-out;
+        -o-transition: all 1s ease-in-out;
+        transition: all 1s ease-in-out;
+      }
+    }
+  }
+
+ .tree div:nth-child(5) {
+    position: absolute;
+    top: 218px;
+    left: 128px;
+  }
+
+ .tree div:nth-child(5) a {
+    color: #145b9b;
+    font-size: 58.35px;
+  }
+
+ .tree div:nth-child(6) {
+    position: absolute;
+    bottom: 324px;
+    right: 38px;
+  }
+
+ .tree div:nth-child(6) a {
+    color: #186db9;
+    font-size: 42.18px;
+  }
+
+ .tree div:nth-child(7) {
+    position: absolute;
+    bottom: 327px;
+    left: 68px;
+  }
+
+ .tree div:nth-child(7) a {
+    color: #89b0c1;
+    font-size: 45.39px;
+  }
+
+ .tree div:nth-child(8) {
+    position: absolute;
+    top: 36px;
+    right: 248px;
+  }
+
+ .tree div:nth-child(8) a {
+    color: #1d8db5;
+    font-size: 42.5px;
+  }
+
+ .tree div:nth-child(9) {
+    position: absolute;
+    bottom: 277px;
+
+    right: 12px;
+  }
+
+ .tree div:nth-child(9) a {
+    color: #60bae3;
+    font-size: 34.09px;
+  }
+
+ .tree div:nth-child(10) {
+    position: absolute;
+    top: 27px;
+    left: 240px;
+  }
+
+ .tree div:nth-child(10) a {
+    color: #145b9b;
+    font-size: 26.1px;
+  }
+
+ .tree div:nth-child(11) {
+    position: absolute;
+    top: 87px;
+    left: 490px;
+  }
+
+ .tree div:nth-child(11) a {
+    color: #01aec9;
+    font-size: 61.76px;
+  }
+
+ .tree div:nth-child(12) {
+    position: absolute;
+    top: 158px;
+    right: 234px;
+  }
+
+ .tree div:nth-child(12) a {
+    color: #588ba4;
+    font-size: 72.32px;
+  }
+
+ .tree div:nth-child(13) {
+    position: absolute;
+    top: 283px;
+    right: 114px;
+  }
+
+ .tree div:nth-child(13) a {
+    color: #60bae3;
+    font-size: 65.1px;
+  }
+
+ .tree div:nth-child(14) {
+    position: absolute;
+    top: 154px;
+    right: 519px;
+  }
+
+ .tree div:nth-child(14) a {
+    color: #60bae3;
+    font-size: 50.88px;
+  }
+
+ .tree div:nth-child(15) {
+    position: absolute;
+    top: 154px;
+    right: 662px;
+  }
+
+ .tree div:nth-child(15) a {
+    color: #90aa37;
+    font-size: 62.88px;
+  }
+
+  @-webkit-keyframes rotate-lr {
+    from {
+      -webkit-transform: rotate(-3deg);
+    }
+    to {
+      -webkit-transform: rotate(3deg);
+    }
+  }
+
+  @-webkit-keyframes rotate-rl {
+    from {
+      -webkit-transform: rotate(3deg);
+    }
+    to {
+      -webkit-transform: rotate(-3deg);
+    }
+  }
+
+  @-moz-keyframes rotate-lr {
+    from {
+      -moz-transform: rotate(-3deg);
+    }
+    to {
+      -moz-transform: rotate(3deg);
+    }
+  }
+
+  @-moz-keyframes rotate-rl {
+    from {
+      -moz-transform: rotate(3deg);
+    }
+    to {
+      -moz-transform: rotate(-3deg);
+    }
+  }
+
+  @keyframes rotate-lr {
+    from {
+      transform: rotate(-3deg);
+    }
+    to {
+      transform: rotate(3deg);
+    }
+  }
+
+  @keyframes rotate-rl {
+    from {
+      transform: rotate(3deg);
+    }
+    to {
+      transform: rotate(-3deg);
+    }
+  }
+}
+
+

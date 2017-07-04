@@ -1,0 +1,10 @@
+.skills .skills-icon i {
+  display: block;
+  font-size: 150px; }
+.skills .skills-icon span {
+  font-size: 30px; }
+.skills .skills-icon .operator div {
+  font-size: 70px;
+  margin-bottom: 30px; }
+
+/*# sourceMappingURL=skills.component.css.map */

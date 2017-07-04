@@ -1,0 +1,90 @@
+@charset "utf-8";
+
+@import "../node_modules/bootstrap/scss/mixins";
+@import "../node_modules/bootstrap/scss/variables";
+@import "global";
+
+
+
+@font-face {
+  font-family: 'LicensePlate';
+  src: url('./font/licenseplate-webfont.eot');
+  src: url('./font/licenseplate-webfont.eot?#iefix') format('embedded-opentype'), url('./font/licenseplate-webfont.woff') format('woff'), url('./font/licenseplate-webfont.ttf') format('truetype'), url('./font/licenseplate-webfont.svg#license_plateregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+// TODO bg start
+#bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  z-index: -1;
+  &:before {
+    content: ' ';
+    position: absolute;
+    height: 100%;
+    margin-top: -260px;
+    width: 600px;
+    background: #FFF;
+    z-index: 2;
+    -webkit-transform: rotate(45deg);
+    -moz-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    -o-transform: rotate(45deg);
+    transform: rotate(45deg);
+    background: url("images/img2.jpg");
+  }
+}
+
+// TODO bg end
+
+@media (min-width: 992px) {
+  .p-lg-5rem {
+    padding: 5rem !important;
+  }
+}
+
+.circle {
+width: 200px;
+height: 200px;
+position: absolute;
+border-radius: 50%;
+background: #0cc;
+
+.left,.right{
+width:200px;
+height:200px;
+position: absolute;
+top: 0;left: 0;
+}
+.pie_left{
+background: red;
+}
+.pie_left, .pie_right{
+width:200px;
+height:200px;
+position: absolute;
+border-radius: 50%;
+top: 0;left: 0;
+}
+.pie_right{
+  transform:rotate(30deg);
+}
+
+.pie_right,.right {
+clip:rect(0,auto,auto,100px);
+}
+.pie_left , .left{
+clip:rect(0,100px,auto,0);
+}
+
+}
+
+
+// TODO THEMES
+// DEFAULT
+@import "themes";

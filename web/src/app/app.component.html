@@ -1,0 +1,44 @@
+<div themes></div>
+<div class="main-content">
+  <a href="javascript:void(-1);" (click)="showMenu=!showMenu" [class.show-menu]="showMenu" class="menu-btn bgc">
+    <span class="lines"><span class="l1"></span><span class="l2"></span><span class="l3"></span></span>
+  </a>
+
+  <div [class.d-none]="showMenu">
+    <router-outlet></router-outlet>
+  </div>
+  <div class="menu-content" [class.show-menu]="showMenu">
+    <ul class="list-unstyled list-inline">
+      <li class="list-inline-item">
+        <a routerLink="/">
+          <i class="fa fa-user"></i>
+          <span>Home</span>
+        </a>
+      </li>
+      <li class="list-inline-item">
+        <a routerLink="/skills">
+          <i class="fa  fa-terminal"></i>
+          <span>Skills</span>
+        </a>
+      </li>
+      <li class="list-inline-item">
+        <a routerLink="/works">
+          <i class="fa fa-suitcase"></i>
+          <span>Works</span>
+        </a>
+      </li>
+      <li class="list-inline-item">
+        <a routerLink="/blog">
+          <i class="fa fa-pencil-square-o"></i>
+          <span>Blog</span>
+        </a>
+      </li>
+      <li class="list-inline-item">
+        <a routerLink="/contact">
+          <i class="fa fa-envelope"></i>
+          <span>Contact</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>

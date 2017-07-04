@@ -99,3 +99,15 @@ ENV/
 
 # mypy
 .mypy_cache/
+.angular-cli.json
+.editorconfig
+.gitignore
+README.md
+e2e/
+karma.conf.js
+package.json
+protractor.conf.js
+tsconfig.json
+tslint.json
+yarn.lock
+.idea
