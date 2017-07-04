@@ -1,0 +1,163 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="exchange模式">Exchange模式</h1>
+<p>RabbitMQ提供了四种Exchange：fanout,direct,topic,header，常用的是fanout,direct,topic</p>
+<h2 id="direct">Direct</h2>
+<ul>
+<li>消息传递时需要一个“routing_key”，可以简单的理解为要发送到的队列名字。</li>
+<li>这种模式下不需要将Exchange进行任何绑定(binding)操作</li>
+</ul>
+<p><strong>接收端</strong></p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment"># # -*- coding: utf-8 -*-</span>
+<span class="hljs-keyword">import</span> pika
+
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=<span class="hljs-string">"0.0.0.0"</span>, virtual_host=<span class="hljs-string">"/"</span>))
+channel = connection.channel()
+
+channel.exchange_declare(exchange=<span class="hljs-string">'direct_logs'</span>, type=<span class="hljs-string">'direct'</span>)
+result = channel.queue_declare(durable=<span class="hljs-keyword">True</span>, queue=<span class="hljs-string">"direct_key"</span>)
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">callback</span><span class="hljs-params">(ch, method, properties, body)</span>:</span>
+    <span class="hljs-keyword">print</span> <span class="hljs-string">" [x] Received %s routing_key %s"</span> % (body, method.routing_key)
+    ch.basic_ack(method.delivery_tag)
+
+
+channel.basic_consume(callback, queue=result.method.queue)
+channel.start_consuming()</code></pre>
+<p><strong>发送端</strong></p>
+<pre class="prettyprint"><code class=" hljs bash"><span class="hljs-comment"># # -*- coding: utf-8 -*-</span>
+import pika
+
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=<span class="hljs-string">"0.0.0.0"</span>, virtual_host=<span class="hljs-string">"/"</span>))
+channel = connection.channel()
+channel.exchange_<span class="hljs-keyword">declare</span>(exchange=<span class="hljs-string">'direct_logs'</span>, <span class="hljs-built_in">type</span>=<span class="hljs-string">'direct'</span>)
+channel.basic_publish(exchange=<span class="hljs-string">'direct_logs'</span>,
+                      routing_key=<span class="hljs-string">'k1'</span>,
+                      body=<span class="hljs-string">"22222222"</span>,
+                      properties=pika.BasicProperties(
+                          delivery_mode=<span class="hljs-number">2</span>,
+                      ))
+channel.basic_publish(exchange=<span class="hljs-string">'direct_logs'</span>,
+                      routing_key=<span class="hljs-string">'k2'</span>,
+                      body=<span class="hljs-string">"22222222"</span>,
+                      properties=pika.BasicProperties(
+                          delivery_mode=<span class="hljs-number">2</span>,
+                      ))
+</code></pre>
+<h2 id="fanout">Fanout</h2>
+<ul>
+<li>这种模式不需要<code>routing_key</code></li>
+<li>这种模式需要提前将Exchange与Queue进行绑定，一个Exchange可以绑定多个Queue，一个Queue可以同多个Exchange进行绑定。</li>
+</ul>
+<p><strong>接收端</strong></p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment"># # -*- coding: utf-8 -*-</span>
+<span class="hljs-keyword">import</span> pika
+
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=<span class="hljs-string">"0.0.0.0"</span>, virtual_host=<span class="hljs-string">"/"</span>))
+channel = connection.channel()
+channel.exchange_declare(exchange=<span class="hljs-string">'fanout_logs'</span>, type=<span class="hljs-string">'fanout'</span>)
+result = channel.queue_declare(durable=<span class="hljs-keyword">True</span>)
+channel.queue_bind(exchange=<span class="hljs-string">'fanout_logs'</span>, queue=result.method.queue)
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">callback</span><span class="hljs-params">(ch, method, properties, body)</span>:</span>
+    <span class="hljs-keyword">print</span> <span class="hljs-string">" [x] Received %s routing_key %s"</span> % (body, method.routing_key)
+    ch.basic_ack(method.delivery_tag)
+
+
+channel.basic_consume(callback, queue=result.method.queue)
+channel.start_consuming()
+</code></pre>
+<p><strong>发送端</strong></p>
+<pre class="prettyprint"><code class=" hljs vhdl"># # -*- coding: utf-<span class="hljs-number">8</span> -*-
+import pika
+
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=<span class="hljs-string">"0.0.0.0"</span>, virtual_host=<span class="hljs-string">"/"</span>))
+channel = connection.channel()
+channel.exchange_declare(exchange=<span class="hljs-attribute">'fanout_logs</span>', <span class="hljs-keyword">type</span>=<span class="hljs-attribute">'fanout</span>')
+channel.basic_publish(exchange=<span class="hljs-attribute">'fanout_logs</span>',
+                      routing_key=<span class="hljs-attribute">'k1</span>',
+                      <span class="hljs-keyword">body</span>=<span class="hljs-string">"22222222"</span>,
+                      properties=pika.BasicProperties(
+                          delivery_mode=<span class="hljs-number">2</span>,
+                      ))
+channel.basic_publish(exchange=<span class="hljs-attribute">'fanout_logs</span>',
+                      routing_key=<span class="hljs-attribute">'k2</span>',
+                      <span class="hljs-keyword">body</span>=<span class="hljs-string">"22222222"</span>,
+                      properties=pika.BasicProperties(
+                          delivery_mode=<span class="hljs-number">2</span>,
+                      ))
+channel.basic_publish(exchange=<span class="hljs-attribute">'fanout_logs</span>',
+                      routing_key=<span class="hljs-attribute">'k3</span>',
+                      <span class="hljs-keyword">body</span>=<span class="hljs-string">"22222222"</span>,
+                      properties=pika.BasicProperties(
+                          delivery_mode=<span class="hljs-number">2</span>,
+                      ))</code></pre>
+<p><strong>结果</strong></p>
+<pre class="prettyprint"><code class=" hljs css"> <span class="hljs-attr_selector">[x]</span> <span class="hljs-tag">Received</span> 22222222 <span class="hljs-tag">routing_key</span> <span class="hljs-tag">k1</span>
+ <span class="hljs-attr_selector">[x]</span> <span class="hljs-tag">Received</span> 22222222 <span class="hljs-tag">routing_key</span> <span class="hljs-tag">k2</span>
+ <span class="hljs-attr_selector">[x]</span> <span class="hljs-tag">Received</span> 22222222 <span class="hljs-tag">routing_key</span> <span class="hljs-tag">k3</span>
+</code></pre>
+<h2 id="topic">Topic</h2>
+<ul>
+<li>这种模式需要RouteKey，也许要提前绑定Exchange与Queue。</li>
+<li>在进行绑定时，要提供一个该队列关心的主题，如<code>*.log.*</code>表示该队列关心所有涉及log的消息(一个routing_key为”a.log.error”的消息会被转发到该队列)。</li>
+</ul>
+<p><strong>接收端</strong></p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment"># # -*- coding: utf-8 -*-</span>
+<span class="hljs-keyword">import</span> pika
+
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=<span class="hljs-string">"0.0.0.0"</span>, virtual_host=<span class="hljs-string">"/"</span>))
+channel = connection.channel()
+channel.exchange_declare(exchange=<span class="hljs-string">"topic_logs"</span>, type=<span class="hljs-string">'topic'</span>)
+result = channel.queue_declare(durable=<span class="hljs-keyword">True</span>)
+channel.queue_bind(exchange=<span class="hljs-string">"topic_logs"</span>, queue=result.method.queue, routing_key=<span class="hljs-string">"*.log.*"</span>)
+channel.queue_bind(exchange=<span class="hljs-string">"topic_logs"</span>, queue=result.method.queue, routing_key=<span class="hljs-string">"*.db.cc"</span>)
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">callback</span><span class="hljs-params">(ch, method, properties, body)</span>:</span>
+    <span class="hljs-keyword">print</span> <span class="hljs-string">" [x] Received %s routing_key %s"</span> % (body, method.routing_key)
+    ch.basic_ack(method.delivery_tag)
+
+
+channel.basic_consume(callback, queue=result.method.queue)
+channel.start_consuming()</code></pre>
+<p><strong>发送端</strong></p>
+<pre class="prettyprint"><code class=" hljs vhdl"># # -*- coding: utf-<span class="hljs-number">8</span> -*-
+import pika
+
+
+connection = pika.BlockingConnection(pika.ConnectionParameters(host=<span class="hljs-string">"0.0.0.0"</span>, virtual_host=<span class="hljs-string">"/"</span>))
+channel = connection.channel()
+channel.exchange_declare(exchange=<span class="hljs-attribute">'topic_logs</span>', <span class="hljs-keyword">type</span>=<span class="hljs-attribute">'topic</span>')
+channel.basic_publish(exchange=<span class="hljs-attribute">'topic_logs</span>',
+                      routing_key=<span class="hljs-attribute">'user</span>.log.error',
+                      <span class="hljs-keyword">body</span>=<span class="hljs-string">"22222222"</span>,
+                      properties=pika.BasicProperties(
+                          delivery_mode=<span class="hljs-number">2</span>,
+                      ))
+channel.basic_publish(exchange=<span class="hljs-attribute">'topic_logs</span>',
+                      routing_key=<span class="hljs-attribute">'user</span>.log.success',
+                      <span class="hljs-keyword">body</span>=<span class="hljs-string">"22222222"</span>,
+                      properties=pika.BasicProperties(
+                          delivery_mode=<span class="hljs-number">2</span>,
+                      ))
+channel.basic_publish(exchange=<span class="hljs-attribute">'topic_logs</span>',
+                      routing_key=<span class="hljs-attribute">'ad</span>.db.cc',
+                      <span class="hljs-keyword">body</span>=<span class="hljs-string">"22222222"</span>,
+                      properties=pika.BasicProperties(
+                          delivery_mode=<span class="hljs-number">2</span>,
+                      ))</code></pre>
+<p><strong>基于rabbitmq 简单的分布式爬虫程序</strong></p>
+<h1 id="架构">架构</h1>
+<p><img alt="这里写图片描述" src="http://img.blog.csdn.net/20160413013230410" title=""/></p>
+<ol>
+<li>Download进程负责下载页面</li>
+<li>ParseBase监听Download下载完成的消息，解析页面（URL，EMAIL，……）</li>
+</ol>
+<p>使用supervisor 管理进程 <br>
+使用fabfile部署代码</br></p>
+<h1 id="简单版代码">简单版代码</h1>
+<p><a href="https://github.com/neo-hu/rabbitmq-crawler">https://github.com/neo-hu/rabbitmq-crawler</a></p>
+<h2 id="完整版">完整版</h2>
+<p><em>下载:频率修改，代理（翻墙）设置</em> <br>
+<em>页面解析：关键字，分词统计等</em> <br>
+<em>web管理页面等功能</em></br></br></p></div>
+
+</div>

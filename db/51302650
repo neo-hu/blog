@@ -1,0 +1,60 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><blockquote>
+<p>Pillar数据是与特定minion关联的，也就是说每一个minion都只能看到自己的数据，所以Pillar可以用来传递敏感数据</p>
+</blockquote>
+<h1 id="定义pillar数据">定义Pillar数据</h1>
+<h2 id="master配置文件中定义">master配置文件中定义</h2>
+<p><strong>Pillar使用与State相似的SLS文件。Pillar文件放在master配置文件中pillar_roots定义的目录下</strong></p>
+<pre class="prettyprint"><code class=" hljs lasso">vim /etc/salt/master
+<span class="hljs-attribute">...</span><span class="hljs-attribute">...</span>
+pillar_roots:
+  base:
+    <span class="hljs-subst">-</span> /srv/pillar
+  <span class="hljs-attribute">...</span><span class="hljs-attribute">...</span></code></pre>
+<p><strong>Pillar也有top file，也使用相同的匹配方式将数据应用到minion上</strong></p>
+<pre class="prettyprint"><code class=" hljs haml">vim /srv/pillar/top.sls
+
+base:
+  '*':
+    -<span class="ruby"> test
+</span>    -<span class="ruby"> os_test
+</span></code></pre>
+<pre class="prettyprint"><code class=" hljs php">vim /srv/pillar/test.sls
+info: test_data
+
+vim /srv/pillar/os_test.sls <span class="hljs-comment">#利用Pillar处理平台差异</span>
+{% <span class="hljs-keyword">if</span> grains[<span class="hljs-string">'os_family'</span>] == <span class="hljs-string">'RedHat'</span> %}
+www_root: /<span class="hljs-keyword">var</span>/www
+{% elif grains[<span class="hljs-string">'os_family'</span>] == <span class="hljs-string">'Debian'</span> %}
+www_root: /<span class="hljs-keyword">var</span>/data
+{% <span class="hljs-keyword">endif</span> %}
+
+</code></pre>
+<pre class="prettyprint"><code class=" hljs livecodeserver">salt <span class="hljs-string">'*'</span> pillar.<span class="hljs-keyword">items</span> www_root
+salt <span class="hljs-string">'*'</span> pillar.<span class="hljs-keyword">items</span> info</code></pre>
+<h2 id="定义定时任务">定义定时任务</h2>
+<pre class="prettyprint"><code class=" hljs haml">
+vim /srv/pillar/top.sls
+base:
+  "*":
+      -<span class="ruby"> schedule
+</span>      -<span class="ruby"> 
+</span>-<span class="ruby">------------------------------------------   
+</span>vim /srv/pillar/schedule.sls
+#每秒吧日志输出到 /tmp/date.log
+schedule:
+
+  test-job:
+
+    function: cmd.run #方法
+
+    seconds: 1 #时间/秒
+
+    args:
+
+      -<span class="ruby"> <span class="hljs-string">'date &gt;&gt; /tmp/date.log'</span> 
+</span></code></pre>
+<p>在master上修改Pilla文件后，需要用以下命令刷新minion上的数据</p>
+<pre class="prettyprint"><code class=" hljs avrasm"> <span class="hljs-string">"*"</span> saltutil<span class="hljs-preprocessor">.refresh</span>_pillar</code></pre></div>
+
+</div>

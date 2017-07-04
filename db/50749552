@@ -1,0 +1,23 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="django-rest-框架">Django REST 框架</h1>
+<h2 id="django-tastypie">django-tastypie</h2>
+<p><a href="https://github.com/django-tastypie/django-tastypie" title="django-tastypie">django-tastypie</a> <br>
+    Tastypie 是 Django 框架的一个 webservice 接口。它提供了一个方便、强大而且高定制化的 REST 风格接口。 <br>
+    Tastypie 非常容易显示您的模型，但也能完全让你控制你所期望得到的信息。只要你需要，能让你远离抽象的数据库。 Tastypie 也能让你非常容易的集成非 ORM 的数据源。</br></br></p>
+<ol>
+<li>支持 GET/POST/PUT/DELETE/PATCH 方式调用</li>
+<li>合理的预设值</li>
+<li>设计起来方便扩展</li>
+<li>支持多种序列化的格式（ JSON/XML/YMAL/bplist ）</li>
+</ol>
+<h1 id="工具">工具</h1>
+<h2 id="django-extensions">Django extensions</h2>
+<p><a href="https://github.com/django-extensions/django-extensions">Django Extensions</a> 是Django框架的扩展功能集合. <br>
+包括management命令扩展,数据库字段扩展,admin后台扩展等.</br></p>
+<h2 id="django-compressor">Django Compressor</h2>
+<p><a href="https://github.com/django-compressor/django-compressor">Django Compressor</a>可将页面中链接的以及直接编写的JavaScript和CSS打包到一个单一的缓存文件中，以减少页面对服务器的请求数，加快页面的加载速度。</p>
+<h1 id="其他">其他</h1>
+<h2 id="django-mptt">Django mptt</h2>
+<p><a href="https://github.com/django-mptt/django-mptt">Django mptt</a>使Django项目能在数据库中存储层级数据（树形数据）</p></div>
+
+</div>

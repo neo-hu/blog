@@ -1,0 +1,75 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><p>用于标识出资源的状态。当资源发生变更时，如果其头信息中一个或者多个发生变化，或者消息实体发生变化，那么ETag也随之发生变化。 <br>
+ETag常与If-None-Match或者If-Match一起，由客户端通过HTTP头信息(包括ETag值)发送给服务端处理。ETag使用如下：</br></p>
+<p><strong>request headers</strong></p>
+<pre class="prettyprint"><code class=" hljs asciidoc"><span class="hljs-code">......
+If-None-Match: "3c64e7a072b3b57e100c96134e5ed2929e8dc56c"
+......</span></code></pre>
+<p><strong>response headers</strong></p>
+<pre class="prettyprint"><code class=" hljs http"><span class="hljs-status">HTTP/1.1 <span class="hljs-number">304</span> Not Modified</span>
+
+<span class="http"><span class="hljs-attribute">Date</span>: <span class="hljs-string">Tue, 10 May 2016 06:29:05 GMT</span>
+
+<span class="http"><span class="hljs-attribute">Etag</span>: <span class="hljs-string">"3c64e7a072b3b57e100c96134e5ed2929e8dc56c"</span>
+
+<span class="http"><span class="hljs-attribute">Server</span>: <span class="hljs-string">TornadoServer/4.3</span></span></span></span></code></pre>
+<h1 id="tornado-etag-实现">Tornado Etag 实现</h1>
+<p><strong>根据请求的返回的数据_write_buffer，通过<code>hashlib.sha1</code>算出etag</strong></p>
+<pre class="prettyprint"><code class=" hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">compute_etag</span><span class="hljs-params">(self)</span>:</span>
+    <span class="hljs-string">"""Computes the etag header to be used for this request.
+
+     By default uses a hash of the content written so far.
+
+     May be overridden to provide custom etag implementations,
+     or may return None to disable tornado's default etag support.
+     """</span>
+     hasher = hashlib.sha1()
+     <span class="hljs-keyword">for</span> part <span class="hljs-keyword">in</span> self._write_buffer:
+         hasher.update(part)
+     <span class="hljs-keyword">return</span> <span class="hljs-string">'"%s"'</span> % hasher.hexdigest()</code></pre>
+<p><strong>通过<code>request</code>.<code>headers</code>的<code>If-None-Match"</code> 获取上一次的etag和这次的etag比较</strong></p>
+<pre class="prettyprint"><code class=" hljs python"> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">check_etag_header</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-string">"""Checks the ``Etag`` header against requests's ``If-None-Match``.
+
+        Returns ``True`` if the request's Etag matches and a 304 should be
+        returned. For example::
+
+            self.set_etag_header()
+            if self.check_etag_header():
+                self.set_status(304)
+                return
+
+        This method is called automatically when the request is finished,
+        but may be called earlier for applications that override
+        `compute_etag` and want to do an early check for ``If-None-Match``
+        before completing the request.  The ``Etag`` header should be set
+        (perhaps with `set_etag_header`) before calling this method.
+        """</span>
+        computed_etag = utf8(self._headers.get(<span class="hljs-string">"Etag"</span>, <span class="hljs-string">""</span>))
+        <span class="hljs-comment"># Find all weak and strong etag values from If-None-Match header</span>
+        <span class="hljs-comment"># because RFC 7232 allows multiple etag values in a single header.</span>
+        etags = re.findall(
+            <span class="hljs-string">br'\*|(?:W/)?"[^"]*"'</span>,
+            utf8(self.request.headers.get(<span class="hljs-string">"If-None-Match"</span>, <span class="hljs-string">""</span>))
+        )
+        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> computed_etag <span class="hljs-keyword">or</span> <span class="hljs-keyword">not</span> etags:
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">False</span>
+        match = <span class="hljs-keyword">False</span>
+        <span class="hljs-keyword">if</span> etags[<span class="hljs-number">0</span>] == <span class="hljs-string">b'*'</span>:
+            match = <span class="hljs-keyword">True</span>
+        <span class="hljs-keyword">else</span>:
+            <span class="hljs-comment"># Use a weak comparison when comparing entity-tags.</span>
+            val = <span class="hljs-keyword">lambda</span> x: x[<span class="hljs-number">2</span>:] <span class="hljs-keyword">if</span> x.startswith(<span class="hljs-string">b'W/'</span>) <span class="hljs-keyword">else</span> x
+            <span class="hljs-keyword">for</span> etag <span class="hljs-keyword">in</span> etags:
+                <span class="hljs-keyword">if</span> val(etag) == val(computed_etag):
+                    match = <span class="hljs-keyword">True</span>
+                    <span class="hljs-keyword">break</span>
+        <span class="hljs-keyword">return</span> match</code></pre>
+<p><strong>如果一样说明没改变，不返还内容只返回304</strong></p>
+<pre class="prettyprint"><code class=" hljs asciidoc"><span class="hljs-code">......
+if self.check_etag_header():
+       self._write_buffer = []
+       self.set_status(304)
+......</span></code></pre></div>
+
+</div>

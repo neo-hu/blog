@@ -1,0 +1,128 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment"># coding=utf-8</span>
+<span class="hljs-keyword">import</span> sys
+<span class="hljs-keyword">import</span> math
+
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Item</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-comment">#需要计算的字段，必须能相减的</span>
+    field = [<span class="hljs-string">"age"</span>, <span class="hljs-string">"h"</span>]
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, name=<span class="hljs-string">""</span>, age=<span class="hljs-number">0.0</span>, h=<span class="hljs-number">0.0</span>)</span>:</span>
+        self.name = name
+        self.age = age
+        self.h = h
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__eq__</span><span class="hljs-params">(self, other)</span>:</span>
+        <span class="hljs-string">"""
+        对象是否一样
+        """</span>
+        <span class="hljs-keyword">if</span> self.__class__ != other.__class__:
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">False</span>
+        <span class="hljs-keyword">for</span> field <span class="hljs-keyword">in</span> self.field:
+            val1 = getattr(self, field, <span class="hljs-number">0.0</span>)
+            val2 = getattr(other, field, <span class="hljs-number">0.0</span>)
+            <span class="hljs-keyword">if</span> val1 != val2:
+                <span class="hljs-keyword">return</span> <span class="hljs-keyword">False</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">True</span>
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">sub</span><span class="hljs-params">(self, other)</span>:</span>
+        <span class="hljs-string">"""
+        self和other相减的距离
+        """</span>
+        <span class="hljs-keyword">if</span> self.__class__ != other.__class__:
+            <span class="hljs-keyword">return</span> sys.maxint
+        dob = <span class="hljs-number">0</span>
+        <span class="hljs-keyword">for</span> field <span class="hljs-keyword">in</span> self.field:
+            val1 = getattr(self, field, <span class="hljs-number">0.0</span>)
+            val2 = getattr(other, field, <span class="hljs-number">0.0</span>)
+            dob += math.pow(val1 - val2, <span class="hljs-number">2</span>)
+        <span class="hljs-keyword">return</span> float(int(math.sqrt(dob)))
+
+    __sub__ = __rsub__ = <span class="hljs-keyword">lambda</span> x, y: x.sub(y)
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__str__</span><span class="hljs-params">(self)</span>:</span>
+        <span class="hljs-keyword">return</span> (self.name <span class="hljs-keyword">or</span> <span class="hljs-string">"None"</span>) + <span class="hljs-string">":"</span> + (<span class="hljs-string">","</span>.join([<span class="hljs-string">"%s:%s"</span> % (x, getattr(self, x)) <span class="hljs-keyword">for</span> x <span class="hljs-keyword">in</span> self.field]))
+
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Kmeans</span><span class="hljs-params">(object)</span>:</span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, objects, k)</span>:</span>
+        self.objects = objects
+        self.k = k
+        <span class="hljs-comment">#初始对象</span>
+        self.init_objects = objects[<span class="hljs-number">0</span>: k]
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">com_put</span><span class="hljs-params">(self)</span>:</span>
+        results = []
+        center_change = <span class="hljs-keyword">True</span>
+        <span class="hljs-keyword">while</span> center_change:
+            center_change = <span class="hljs-keyword">False</span>
+            results = []
+            <span class="hljs-keyword">for</span> index <span class="hljs-keyword">in</span> range(<span class="hljs-number">0</span>, self.k):
+                results.append([])
+            <span class="hljs-keyword">for</span> obj <span class="hljs-keyword">in</span> self.objects:
+                dists = {}
+                <span class="hljs-keyword">for</span> i, i_obj <span class="hljs-keyword">in</span> enumerate(self.init_objects):
+                    <span class="hljs-comment"># 计算距离</span>
+                    dists[i] = i_obj - obj
+                dist_index = self.comput_order(dists)
+                results[dist_index].append(obj)
+            <span class="hljs-keyword">for</span> index <span class="hljs-keyword">in</span> range(<span class="hljs-number">0</span>, self.k):
+                new_item = self.find_new_center(results[index])
+                old_item = self.init_objects[index]
+                <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> new_item == old_item:
+                    center_change = <span class="hljs-keyword">True</span>
+                    self.init_objects[index] = new_item
+        <span class="hljs-keyword">return</span> results
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">find_new_center</span><span class="hljs-params">(self, dists)</span>:</span>
+        <span class="hljs-string">"""
+        找到中心点
+        """</span>
+        ds = {}
+        new_item = self.objects[<span class="hljs-number">0</span>].__class__()
+        <span class="hljs-keyword">if</span> dists <span class="hljs-keyword">is</span> <span class="hljs-keyword">None</span> <span class="hljs-keyword">or</span> len(dists) == <span class="hljs-number">0</span>: <span class="hljs-keyword">return</span> new_item
+
+        <span class="hljs-keyword">for</span> item <span class="hljs-keyword">in</span> dists:
+            <span class="hljs-keyword">for</span> index, field <span class="hljs-keyword">in</span> enumerate(item.field):
+                ds[index] = ds.get(index, <span class="hljs-number">0.0</span>) + getattr(item, field, <span class="hljs-number">0.0</span>)
+        <span class="hljs-keyword">for</span> index, field <span class="hljs-keyword">in</span> enumerate(new_item.field):
+            ds[index] /= len(dists)
+            setattr(new_item, field, ds[index])
+        <span class="hljs-keyword">return</span> new_item
+
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">comput_order</span><span class="hljs-params">(self, dists)</span>:</span>
+        <span class="hljs-string">"""
+        得到最短距离，并返回最短距离索引
+        """</span>
+        m = <span class="hljs-number">0</span>
+        index = <span class="hljs-number">0</span>
+        <span class="hljs-keyword">for</span> i, item <span class="hljs-keyword">in</span> dists.items():
+            <span class="hljs-keyword">if</span> i == len(dists) - <span class="hljs-number">1</span>:
+                <span class="hljs-keyword">break</span>
+            <span class="hljs-keyword">if</span> i == <span class="hljs-number">0</span>:
+                m = item
+                index = <span class="hljs-number">0</span>
+            dist1 = dists[i + <span class="hljs-number">1</span>]
+            <span class="hljs-keyword">if</span> m &gt; dist1:
+                m = dist1
+                index = i + <span class="hljs-number">1</span>
+        <span class="hljs-keyword">return</span> index
+
+
+<span class="hljs-comment">#记录数</span>
+l = [Item(<span class="hljs-string">"p1"</span>, <span class="hljs-number">5</span>, <span class="hljs-number">30</span>), Item(<span class="hljs-string">"p1"</span>, <span class="hljs-number">30</span>, <span class="hljs-number">10</span>), Item(<span class="hljs-string">"p1"</span>, <span class="hljs-number">21</span>, <span class="hljs-number">10</span>),
+     Item(<span class="hljs-string">"p1"</span>, <span class="hljs-number">25</span>, <span class="hljs-number">20</span>), Item(<span class="hljs-string">"p1"</span>, <span class="hljs-number">66</span>, <span class="hljs-number">20.5</span>), Item(<span class="hljs-string">"p1"</span>, <span class="hljs-number">15</span>, <span class="hljs-number">10</span>),
+     Item(<span class="hljs-string">"p1"</span>, <span class="hljs-number">21</span>, <span class="hljs-number">50</span>)]
+<span class="hljs-comment">#簇的个数</span>
+k = <span class="hljs-number">3</span>
+results = Kmeans(l, k).com_put()
+
+<span class="hljs-keyword">for</span> i, x <span class="hljs-keyword">in</span> enumerate(results):
+    <span class="hljs-keyword">print</span> <span class="hljs-string">"#####category(%s)#####"</span> % i
+    <span class="hljs-keyword">for</span> item <span class="hljs-keyword">in</span> x:
+        <span class="hljs-keyword">print</span> item
+
+</code></pre></div>
+
+</div>

@@ -1,0 +1,195 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><table>
+<thead>
+<tr>
+<th align="left">mysql</th>
+<th align="left">MongoDB</th>
+<th align="left"></th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">inert into test value(3,5)</td>
+<td align="left">db.test.insert({c1:3, c2:5})<br>db.test.insert({c1:36, c2:56, “name”:”abcd”})</br></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left">select count(1) from test</td>
+<td align="left">db.test.count()</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left">select * from test</td>
+<td align="left">db.test.find()</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left">select c1 from test</td>
+<td align="left">db.test.find({},{“c1”:true})</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left">select * from test  where c1=3</td>
+<td align="left">db.test.find({“c1”:3})</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left">select * from test  where c1=3 order by c2</td>
+<td align="left">db.test.find({“c1”:3}).sort({“c2”:1})</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><code>select * from test  where c1&gt;3 order by c2</code></td>
+<td align="left"><code>db.test.find({"c1":{"$gt":3}})</code></td>
+<td align="left"><code>条件操作符，"$lt", "$lte", "$gt", "$gte", "$ne"就是全部的比较操作符，对应于"&lt;", "&lt;=", "&gt;", "&gt;=","!="</code></td>
+</tr>
+<tr>
+<td align="left"><code>select * from test  where name like "%jjj%"</code></td>
+<td align="left"><code>db.test.find({"name":/c/})</code></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><code>select * from test  where name like "a%"</code></td>
+<td align="left"><code>db.test.find({"name":/^a/})</code></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><code>select * from test  where c1&gt;2 and c1 &lt; 4</code></td>
+<td align="left"><code>db.test.find({"c1":{"$gt":2,"$lt":4}})</code></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><code>select * from test where c1&gt;2 or c2 &lt; 4</code></td>
+<td align="left"><code>db.test.find({"$or":[{c1:{"$gt":1}}, {"c2":{"$lt":4}}]})</code></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><code>select * from test limit 1</code></td>
+<td align="left"><code>db.test.find().limit(1)</code> <br> <code>db.test.findOne()</code></br></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><code>select * from test limit 1，1</code></td>
+<td align="left"><code>db.test.find().limit(1).skip(1)</code></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><code>select distinct c1 from test</code></td>
+<td align="left"><code>db.test.distinct("c1")</code></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><code>select count(name) from test</code></td>
+<td align="left"><code>db.test.find({"name":{"$exists":true}}).count()</code></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><code>CREATE INDEX  name_idx ON test(name);</code></td>
+<td align="left"><code>db.test.createIndex({"name":1})</code></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="left"><code>explain select * from test</code></td>
+<td align="left"><code>db.test.find().explain()</code></td>
+<td align="left"></td>
+</tr>
+</tbody></table>
+<p>测试数据</p>
+<pre class="prettyprint"><code class=" hljs avrasm">&gt; db<span class="hljs-preprocessor">.job</span><span class="hljs-preprocessor">.find</span>()
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee71d41c83d34573438"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"北京车到网络科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"北京"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"高级JAVA工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee71d41c83d34573439"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"杭州蜂贷网络科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"杭州"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"java开发工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee71d41c83d3457343a"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"金仓数据库（上海）有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"北京"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"java软件工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee71d41c83d34573459"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"浙江菁英电商管理服务有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"金华"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"java开发工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee71d41c83d3457345b"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"桂林赛普电子科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"异地招聘"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"JAVA高级工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee71d41c83d3457345d"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"上海柏维信息技术有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"上海"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"高级java工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee71d41c83d34573464"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"上海云虎软件有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"上海"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"资深java开发（偏前端）"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee71d41c83d34573465"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"江苏云联科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"苏州"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"Java开发项目经理"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d34573466"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"北京依蓝天创科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"北京"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"JAVA软件开发工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d34573469"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"广州上善信息科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"广州"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"Java开发工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d3457346a"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"广东三合科技投资有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"广州"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"JAVA后台开发"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d3457346b"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"博易智软（北京）技术股份有限公司..."</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"上海"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"高级java工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d3457346c"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"北京便联生活科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"北京"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"Java初级工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d3457346d"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"北京晨星启明科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"北京"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"高级JAVA开发工程师-宝大夫"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d3457346e"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"核工业计算机应用研究所"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"北京"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"JAVA研发工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d3457346f"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"湖南盛世通和科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"长沙"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"JAVA工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d34573470"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"上海通创信息技术有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"上海"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"高级Java研发工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d34573471"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"苏州优爱妈妈信息科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"苏州"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"JAVA开发工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d345734c4"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"广东知好乐教育科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"异地招聘"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"java高级工程师"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+{ <span class="hljs-string">"_id"</span> : ObjectId(<span class="hljs-string">"57274ee91d41c83d345734c5"</span>), <span class="hljs-string">"co"</span> : <span class="hljs-string">"广州市时代财富科技有限公司"</span>, <span class="hljs-string">"ad"</span> : <span class="hljs-string">"广州"</span>, <span class="hljs-string">"title"</span> : <span class="hljs-string">"java程序员"</span>, <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>, <span class="hljs-string">"type"</span> : <span class="hljs-number">51</span> }
+Type <span class="hljs-string">"it"</span> for more
+</code></pre>
+<h1 id="group">group</h1>
+<pre class="prettyprint"><code class=" hljs javascript">db.job.group(
+    {
+        <span class="hljs-string">"key"</span>: {<span class="hljs-string">"t"</span>:<span class="hljs-literal">true</span>}, 
+        <span class="hljs-string">"initial"</span>:{<span class="hljs-string">"num"</span>:<span class="hljs-number">0</span>},
+        <span class="hljs-string">"$reduce"</span>: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(doc,prev)</span>{</span> 
+             prev.num++
+        }
+    }
+)
+
+[
+    {
+        <span class="hljs-string">"t"</span> : <span class="hljs-string">"java"</span>,
+        <span class="hljs-string">"num"</span> : <span class="hljs-number">56790</span>
+    },
+    {
+        <span class="hljs-string">"t"</span> : <span class="hljs-string">"php"</span>,
+        <span class="hljs-string">"num"</span> : <span class="hljs-number">19799</span>
+    },
+    {
+        <span class="hljs-string">"t"</span> : <span class="hljs-string">"python"</span>,
+        <span class="hljs-string">"num"</span> : <span class="hljs-number">1245</span>
+    },
+    {
+        <span class="hljs-string">"t"</span> : <span class="hljs-string">"net"</span>,
+        <span class="hljs-string">"num"</span> : <span class="hljs-number">17060</span>
+    }
+]
+</code></pre>
+<blockquote>
+<p>“key”:表示集合数据分组的依据。这里我们指定了“t”键，那么会根据集合文档中的<code>t</code>进行分组。true是指在分组的结果中就会显示每组“t”的键值。 <br>
+  “initial”:初始化变量，num<code>累加器</code>这个文档中存放是的在分组过程中收集、计算出的信息，不一定是集合文档中的原信息，在后续的<code>$reduce</code>每个分组都保留当前分组的num用作累加 <br>
+  “$reduce”: 分组过程,“doc”代表分组开发过程 中的每一个集合中的文档，而“prev”则代表“累加器文档（num）”的累加状态</br></br></p>
+</blockquote>
+<h2 id="过滤-condition">过滤 condition</h2>
+<pre class="prettyprint"><code class=" hljs javascript">#只统计上海的
+db.job.group(
+    {
+        <span class="hljs-string">"key"</span>: {<span class="hljs-string">"t"</span>:<span class="hljs-literal">true</span>}, 
+        <span class="hljs-string">"initial"</span>:{<span class="hljs-string">"num"</span>:<span class="hljs-number">0</span>},
+        <span class="hljs-string">"$reduce"</span>: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(doc,prev)</span>{</span> 
+             prev.num++
+        },
+        <span class="hljs-string">"condition"</span>: {
+            <span class="hljs-string">"$where"</span>: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span>{</span>
+                <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.ad==<span class="hljs-string">"上海"</span>
+            }
+        }
+    }
+)</code></pre>
+<h2 id="文档执行完-finalize">文档执行完 finalize</h2>
+<pre class="prettyprint"><code class=" hljs javascript">db.job.group(
+    {
+        <span class="hljs-string">"key"</span>: {<span class="hljs-string">"t"</span>:<span class="hljs-literal">true</span>}, 
+        <span class="hljs-string">"initial"</span>:{<span class="hljs-string">"num"</span>:<span class="hljs-number">0</span>},
+        <span class="hljs-string">"$reduce"</span>: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(doc,prev)</span>{</span> 
+             prev.num++
+        },
+        <span class="hljs-string">"condition"</span>: {
+            <span class="hljs-string">"$where"</span>: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span>{</span>
+                <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.ad==<span class="hljs-string">"上海"</span>
+            }
+        },
+        <span class="hljs-string">"finalize"</span>: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(prev)</span>{</span>
+            <span class="hljs-keyword">if</span>(prev.t==<span class="hljs-string">"java"</span>){
+                <span class="hljs-keyword">delete</span> prev.t
+            }
+        }
+    }
+)
+</code></pre>
+<h2 id="每个城市每个语言的人数">每个城市每个语言的人数</h2>
+<pre class="prettyprint"><code class=" hljs avrasm">db<span class="hljs-preprocessor">.job</span><span class="hljs-preprocessor">.group</span>( { <span class="hljs-string">"key"</span>: {<span class="hljs-string">"ad"</span>:true},  <span class="hljs-string">"initial"</span>:{<span class="hljs-string">"tags"</span>: {}}, <span class="hljs-string">"$reduce"</span>: function(doc,prev){ if(doc<span class="hljs-preprocessor">.t</span> <span class="hljs-keyword">in</span> prev<span class="hljs-preprocessor">.tags</span>){prev<span class="hljs-preprocessor">.tags</span>[doc<span class="hljs-preprocessor">.t</span>]++}else{prev<span class="hljs-preprocessor">.tags</span>[doc<span class="hljs-preprocessor">.t</span>] = <span class="hljs-number">1</span>}}})</code></pre></div>
+
+</div>

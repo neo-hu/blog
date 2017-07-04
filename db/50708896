@@ -1,0 +1,17 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><h1 id="环境">环境</h1>
+<p>主机 Ubuntu 12.04 eth0(192.168.31.198)用于共享上网  eth1(10.10.100.100)内网</p>
+<h1 id="配置">配置</h1>
+<h2 id="开启ip转发功能">开启ip转发功能</h2>
+<pre class="prettyprint"><code class=" hljs avrasm">vim /etc/sysctl<span class="hljs-preprocessor">.conf</span></code></pre>
+<pre class="prettyprint"><code class=" hljs avrasm"><span class="hljs-preprocessor">#修改</span>
+net<span class="hljs-preprocessor">.ipv</span>4<span class="hljs-preprocessor">.ip</span>_forward=<span class="hljs-number">1</span></code></pre>
+<pre class="prettyprint"><code class=" hljs lasso"><span class="hljs-comment">//让参数生效</span>
+sysctl <span class="hljs-attribute">-p</span></code></pre>
+<h2 id="数据转发">数据转发</h2>
+<pre class="prettyprint"><code class=" hljs lasso">iptables <span class="hljs-attribute">-A</span> FORWARD  <span class="hljs-attribute">-j</span> ACCEPT
+iptables <span class="hljs-attribute">-t</span> nat <span class="hljs-attribute">-A</span> POSTROUTING <span class="hljs-attribute">-o</span> eth0 <span class="hljs-attribute">-j</span> MASQUERADE</code></pre>
+<h2 id="内网机配置">内网机配置</h2>
+<pre class="prettyprint"><code class=" hljs haskell"><span class="hljs-title">route</span> add <span class="hljs-default"><span class="hljs-keyword">default</span> gw 10.10.100.100</span></code></pre></div>
+
+</div>

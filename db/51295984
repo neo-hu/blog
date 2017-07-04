@@ -1,0 +1,17 @@
+<div class="article_content tracking-ad" data-dsm="post" data-mod="popu_307" id="article_content">
+<div class="markdown_views"><p>在master上创建<code>/srv/salt/_modules/</code>目录 <br>
+添加扩展文件</br></p>
+<pre class="prettyprint"><code class=" hljs python">vim /srv/salt/_modules/hello.py
+
+<span class="hljs-comment"># -*- coding: utf-8 -*-</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">create</span><span class="hljs-params">(msg)</span>:</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-string">'Command: "{0}" completed successfully!'</span>.format(msg)</code></pre>
+<p><strong>同步模块</strong></p>
+<pre class="prettyprint"><code class=" hljs ruby">salt <span class="hljs-string">'*'</span> saltutil.sync_modules
+
+root<span class="hljs-variable">@ubuntu</span><span class="hljs-symbol">:/srv/salt</span><span class="hljs-comment"># salt 'lvs' hello.create 111</span>
+<span class="hljs-symbol">lvs:</span>
+    <span class="hljs-constant">Command</span><span class="hljs-symbol">:</span> <span class="hljs-string">"111"</span> completed successfully!</code></pre></div>
+
+</div>
