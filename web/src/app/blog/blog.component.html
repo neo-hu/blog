@@ -1,5 +1,17 @@
 <div class="blog p-lg-5rem p-4 router-content">
 
   <h3>MY BLOG</h3>
-  <p>Coming Soon!</p>
+  <div class="d-flex flex-wrap categories-filters">
+    <div
+      queryParamsHandling="merge"
+      [routerLink]="['/blog']"
+      class="p-2 mr-1 filter">ALL</div>
+    <div
+      queryParamsHandling="merge"
+      routerLinkActive='active'
+      [routerLink]="['/blog',  {outlets: {category: [category.title], article:null}}]"
+      *ngFor="let category of categories" class="p-2 mr-1 filter">{{category.title}}</div>
+  </div>
+  <router-outlet name="category"></router-outlet>
+  <router-outlet name="article"></router-outlet>
 </div>

@@ -1,0 +1,33 @@
+.articles {
+  .item {
+    .inner {
+      border: 1px solid transparent;
+      border-radius: 3px;
+      -webkit-box-shadow: 0 1px 7px rgba(0, 0, 0, .1);
+      -moz-box-shadow: 0 1px 7px rgba(0, 0, 0, .1);
+      box-shadow: 0 1px 7px rgba(0, 0, 0, .1);
+
+      color: #666;
+      h4 {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        -o-text-overflow: ellipsis;
+        -webkit-text-overflow: ellipsis;
+        -moz-text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #292b2c;
+        font-size: 16px;
+        font-weight: 700;
+      }
+      p {
+        word-break: break-all;
+        display: -webkit-box;
+        -webkit-line-clamp: 5;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+    }
+    //padding: 40px 10px 30px;
+    //margin-bottom: 30px;
+  }
+}

@@ -1,0 +1,16 @@
+  <div *ngIf="!articles" class="col-12">
+    <div class="loading1"></div>
+    <div class="loading1-text">Loading...</div>
+  </div>
+<div class="row articles mt-2">
+
+  <div role="button"
+      routerLinkActive='active'
+       [routerLink]="['/blog', {outlets: {article:[article.url]}}]"
+       *ngFor="let article of articles" class="col-xs-12 col-sm-6 col-md-3 my-2 item">
+    <div class="inner p-4 ">
+      <h4>{{article.title}}</h4>
+      <p>{{article.description_text}}</p>
+    </div>
+  </div>
+</div>
