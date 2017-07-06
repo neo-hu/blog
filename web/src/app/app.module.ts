@@ -15,7 +15,7 @@ import {ToastyModule, ToastyService, ToastyConfig} from './modules/toasty';
 
 import {HttpServiceFactory} from "./http-service"
 // TODO PIPE
-import utilPipe from './util.pipe';
+import {KeysPipe} from './util.pipe';
 
 import {ThemesService} from './themes/themes.component';
 import {BlogService} from './blog/blog.service';
@@ -29,8 +29,12 @@ import {BlogComponent} from './blog/blog.component';
 import {BlogCategoryComponent} from './blog-category/blog-category.component';
 import {BlogArticleComponent, ArticleModalContent} from './blog-article/blog-article.component'
 import {ContactComponent} from './contact/contact.component';
+import { AudioComponent, AudioService } from './audio/audio.component';
 
-const DECLARATIONS: any[] = [
+
+
+@NgModule({
+  declarations: [
   AppComponent,
   ThemesComponent,
   AboutMeComponent,
@@ -42,11 +46,11 @@ const DECLARATIONS: any[] = [
   ArticleModalContent,
   ContactComponent,
   CircleProgressComponent,
-  LoadingComponent
-];
+  LoadingComponent,
+  AudioComponent,
 
-@NgModule({
-  declarations: DECLARATIONS.concat(utilPipe),
+    KeysPipe
+],
   entryComponents:[ArticleModalContent],
   imports: [
     BrowserModule,
@@ -57,7 +61,7 @@ const DECLARATIONS: any[] = [
     RoutingModule,
     ToastyModule.forRoot(),
   ],
-  providers: [ThemesService, Title, LoadingBarService, BlogService, Jsonp,
+  providers: [ThemesService, Title, LoadingBarService, BlogService, Jsonp, AudioService,
     {provide: LocationStrategy, useClass: HashLocationStrategy},
     {
       provide: Http,
