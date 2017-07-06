@@ -41,6 +41,31 @@
       }
     }
   }
+  .hover-children-color:hover{
+    & > *{
+      color: $bgColor;
+    }
+  }
+  .hover-color:hover{
+      color: $bgColor;
+  }
+  .hover-background:hover{
+      @include bgc($bgColor, $bgUrl);
+  }
+
+  .menu-content {
+    li {
+      a.active,a:hover{
+        i{
+          color: #fff;
+          @include bgc($bgColor, $bgUrl);
+        }
+        p{
+          color: #292b2c;
+        }
+      }
+    }
+  }
 
 .loading1{
     border: 1px solid $bgColor;

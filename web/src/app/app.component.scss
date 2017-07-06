@@ -40,6 +40,9 @@
     -moz-transition: all .3s ease;
     transition: all .3s ease;
     cursor: pointer;
+    &.play{
+
+    }
     &.show-menu {
       > .lines {
         > span {
@@ -121,7 +124,7 @@
       a {
         color: inherit;
         text-decoration: none;
-        span {
+        p {
           font-weight: bold;
           text-transform: uppercase;
           letter-spacing: 2px;
@@ -137,6 +140,7 @@
 
         }
         i {
+          overflow: hidden;
           color: #292b2c;
           display: block;
           height: 130px;
