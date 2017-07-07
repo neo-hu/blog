@@ -30,6 +30,7 @@ import {BlogCategoryComponent} from './blog-category/blog-category.component';
 import {BlogArticleComponent, ArticleModalContent} from './blog-article/blog-article.component'
 import {ContactComponent} from './contact/contact.component';
 import { AudioComponent, AudioService } from './audio/audio.component';
+import { CookieService } from './cookie.service';
 
 
 
@@ -48,8 +49,7 @@ import { AudioComponent, AudioService } from './audio/audio.component';
   CircleProgressComponent,
   LoadingComponent,
   AudioComponent,
-
-    KeysPipe
+    KeysPipe,
 ],
   entryComponents:[ArticleModalContent],
   imports: [
@@ -59,9 +59,9 @@ import { AudioComponent, AudioService } from './audio/audio.component';
     HttpModule,
     JsonpModule,
     RoutingModule,
-    ToastyModule.forRoot(),
+    ToastyModule.forRoot()
   ],
-  providers: [ThemesService, Title, LoadingBarService, BlogService, Jsonp, AudioService,
+  providers: [ThemesService, Title, CookieService, LoadingBarService, BlogService, Jsonp, AudioService,
     {provide: LocationStrategy, useClass: HashLocationStrategy},
     {
       provide: Http,

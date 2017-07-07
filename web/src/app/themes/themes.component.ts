@@ -2,6 +2,7 @@ import { Component, OnInit, Injectable } from '@angular/core';
 import 'rxjs/add/operator/filter';
 import {Subject} from 'rxjs/Subject';
 import {Observable} from 'rxjs/Observable';
+import { CookieService, CookieOptionsArgs } from '../cookie.service';
 
 
 
@@ -28,20 +29,33 @@ export class ThemesService {
 })
 export class ThemesComponent implements OnInit {
   themes = {"default":"#2b9eb1", "r1": "#645b5c", "t2": "#ca0d86", "t3": "#e1483f", "t4": "#7de87d"};
-  constructor(private themesService:ThemesService) {
+  cookieKey = "neo_theme";
+  constructor(private cookieService:CookieService,
+              private themesService:ThemesService) {
 
   }
 
   selectTheme(key:string) {
     if (key == "default"){
       document.body.removeAttribute("theme");
+      this.cookieService.remove(this.cookieKey);
     }else{
+      let date = new Date();
+      date.setFullYear(date.getFullYear()+10);
+      let opts: CookieOptionsArgs = {
+        expires: date
+      };
+      this.cookieService.put(this.cookieKey, key, opts);
       document.body.setAttribute("theme", key);
     }
     this.themesService.theme = this.themes[key];
   }
   ngOnInit() {
-    this.selectTheme("default");
+    let cookieTheme = this.cookieService.get(this.cookieKey);
+    if (cookieTheme){
+      this.selectTheme(cookieTheme);
+    }else{
+      this.selectTheme("default");}
   }
 
 }
