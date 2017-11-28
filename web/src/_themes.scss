@@ -10,6 +10,8 @@
     background-image: url($bgUrl);
     background-repeat: repeat;
     background-position: center;
+  } @else {
+    background-image: none;
   }
 }
 
@@ -78,14 +80,14 @@
 // TODO default
 @import "global";
 body {
-  @include themes($bg-color, null);
-}
-
-body[theme=r1] {
   @include themes(#645b5c, "images/theme_bg_1.jpg");
   .menu-btn {
     box-shadow: -1px -1px 3px rgba(0, 0, 0, 0.2), 2px 2px 10px rgba(0, 0, 0, 0.6), inset 2px 2px 0 rgba(255, 255, 255, 0.1);
   }
+}
+
+body[theme=r1] {
+  @include themes($bg-color, null);
 }
 
 body[theme=t1] {

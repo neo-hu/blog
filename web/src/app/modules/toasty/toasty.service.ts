@@ -20,7 +20,7 @@ export class ToastOptions {
   timeout?: number;
   onAdd?: Function;
   onRemove?: Function;
-  onClick?:Function;
+  onClick?: Function;
 }
 
 /**
@@ -47,16 +47,16 @@ export class ToastData {
 export class ToastyConfig {
 
   // Maximum number of toasties to show at once
-  limit: number = 10;
+  limit = 10;
 
   // Whether to show the 'X' icon to close the toast
-  showClose: boolean = true;
+  showClose = true;
 
   // The window position where the toast pops up
   position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'top-center' | 'bottom-center' | 'center-center' = 'bottom-right';
 
   // How long (in miliseconds) the toasty shows before it's removed. Set to null/0 to turn off.
-  timeout: number = 5000;
+  timeout = 5000;
 
   // What theme to use
   theme: 'default' | 'material' | 'bootstrap' = 'default';
@@ -70,7 +70,7 @@ export enum ToastyEventType {
 }
 
 export class ToastyEvent {
-    constructor(public type:ToastyEventType, public value?:any) {}
+    constructor(public type: ToastyEventType, public value?: any) {}
 }
 
 export function toastyServiceFactory(config: ToastyConfig): ToastyService  {
@@ -85,7 +85,7 @@ export class ToastyService {
   // Allowed THEMES
   static THEMES: Array<string> = ['default', 'material', 'bootstrap'];
   // Init the counter
-  uniqueCounter: number = 0;
+  uniqueCounter = 0;
   // ToastData event emitter
   // private toastsEmitter: EventEmitter<ToastData> = new EventEmitter<ToastData>();
   // Clear event emitter
@@ -177,7 +177,7 @@ export class ToastyService {
     this.uniqueCounter++;
 
     // Set the local vs global config items
-    let showClose = this._checkConfigItem(this.config, toastyOptions, 'showClose');
+    const showClose = this._checkConfigItem(this.config, toastyOptions, 'showClose');
 
     // If we have a theme set, make sure it's a valid one
     let theme: string;
@@ -187,7 +187,7 @@ export class ToastyService {
       theme = this.config.theme;
     }
 
-    let toast: ToastData = <ToastData>{
+    const toast: ToastData = <ToastData>{
       id       : this.uniqueCounter,
       title    : toastyOptions.title,
       msg      : toastyOptions.msg,

@@ -7,11 +7,11 @@ import { BlogService } from './blog.service';
   styleUrls: ['./blog.component.scss']
 })
 export class BlogComponent implements OnInit {
-  categories=[];
-  constructor(private blogService:BlogService) { }
+  categories = [];
+  constructor(private blogService: BlogService) { }
 
   ngOnInit() {
-    this.blogService.getCategories().subscribe(res=>this.categories=res);
+    this.blogService.getCategories().subscribe(res => this.categories = res);
   }
 
 }

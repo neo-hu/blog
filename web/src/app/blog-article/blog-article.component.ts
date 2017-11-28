@@ -20,15 +20,15 @@ import {Location} from '@angular/common';
    
   `
 })
-export class ArticleModalContent implements OnInit {
+export class ArticleModalContentComponent implements OnInit {
   @Input() article_uri;
   article;
   ngOnInit(): void {
       this.article = null;
-      this.blogService.getArticle(this.article_uri).subscribe(r=>this.article=r);
+      this.blogService.getArticle(this.article_uri).subscribe(r => this.article = r);
   }
 
-  constructor(private blogService:BlogService, public activeModal: NgbActiveModal) {}
+  constructor(private blogService: BlogService, public activeModal: NgbActiveModal) {}
 }
 
 @Component({
@@ -38,19 +38,20 @@ export class ArticleModalContent implements OnInit {
   encapsulation: ViewEncapsulation.None
 })
 export class BlogArticleComponent implements OnInit {
-  constructor(private _location: Location, private blogService:BlogService, private router: Router, private route: ActivatedRoute, private modalService: NgbModal) { }
+  constructor(private _location: Location, private blogService: BlogService,
+              private router: Router, private route: ActivatedRoute, private modalService: NgbModal) { }
 
   ngOnInit() {
-    this.route.params.subscribe(_=>{
-      window.setTimeout(()=>{
-        let modalRef = this.modalService.open(ArticleModalContent, {windowClass: 'article-modal'});
+    this.route.params.subscribe(_ => {
+      window.setTimeout(() => {
+        const modalRef = this.modalService.open(ArticleModalContentComponent, {windowClass: 'article-modal'});
         modalRef.componentInstance.article_uri = _.article;
-        modalRef.result.then((result) =>{
+        modalRef.result.then((result) => {
         }, (reason) => {
           this._location.back();
-        })
-      })
-    })
+        });
+      });
+    });
   }
 
 }

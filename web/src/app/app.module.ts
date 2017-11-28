@@ -12,8 +12,7 @@ import {LoadingComponent} from './loading/loading.component';
 import {LoadingBarService} from './loading/loading.service';
 import {ToastyModule, ToastyService, ToastyConfig} from './modules/toasty';
 
-
-import {HttpServiceFactory} from "./http-service"
+import {HttpServiceFactory} from './http-service';
 // TODO PIPE
 import {KeysPipe} from './util.pipe';
 
@@ -27,10 +26,13 @@ import {SkillsComponent} from './skills/skills.component';
 import {WorksComponent} from './works/works.component';
 import {BlogComponent} from './blog/blog.component';
 import {BlogCategoryComponent} from './blog-category/blog-category.component';
-import {BlogArticleComponent, ArticleModalContent} from './blog-article/blog-article.component'
+import {BlogArticleComponent, ArticleModalContentComponent} from './blog-article/blog-article.component';
 import {ContactComponent} from './contact/contact.component';
 import { AudioComponent, AudioService } from './audio/audio.component';
 import { CookieService } from './cookie.service';
+
+
+import { TreeDirective } from './about-me/tree.directive';
 
 
 
@@ -44,14 +46,15 @@ import { CookieService } from './cookie.service';
   BlogComponent,
   BlogCategoryComponent,
   BlogArticleComponent,
-  ArticleModalContent,
+  ArticleModalContentComponent,
   ContactComponent,
   CircleProgressComponent,
   LoadingComponent,
   AudioComponent,
     KeysPipe,
+    TreeDirective,
 ],
-  entryComponents:[ArticleModalContent],
+  entryComponents: [ArticleModalContentComponent],
   imports: [
     BrowserModule,
     FormsModule,
