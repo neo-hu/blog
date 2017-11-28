@@ -1,0 +1,8 @@
+
+@font-face {
+  font-family: 'LicensePlate';
+  src: url('font/licenseplate-webfont.eot');
+  src: url('font/licenseplate-webfont.eot?#iefix') format('embedded-opentype'), url('font/licenseplate-webfont.woff') format('woff'), url('font/licenseplate-webfont.ttf') format('truetype'), url('font/licenseplate-webfont.svg#license_plateregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
