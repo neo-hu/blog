@@ -78,13 +78,13 @@ def get_blogs(uri=url):
             print(e)
             raise e
 
-    papelist = soup.select("#papelist a")
-    papelist = set(filter(lambda x: x.text == "下一页", papelist))
+    papelist = soup.select(".pagination a")
+    papelist = set(filter(lambda x: x.attrs.get('rel') and x.attrs.get('rel')[0] == "next", papelist))
     next_url = None
     if papelist:
         next_url = papelist.pop().attrs.get("href")
     if next_url:
-        r += get_blogs("http://blog.csdn.net%s" % next_url)
+        r += get_blogs(next_url)
     return r
 
 
