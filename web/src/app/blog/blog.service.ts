@@ -10,20 +10,20 @@ export class BlogService {
   articlesObservable;
   constructor(private http: Http) { }
 
-  getArticle(_id: string): Observable<string>{
-    return this.http.get('https://neo-hu.github.io/blog/db/' + _id).map(response => {
+  getArticle(_id: string): Observable<string> {
+    return this.http.get('/db/' + _id).map(response => {
       return response.text();
     });
   }
   getArticles(): Observable<Article[]> {
     if (isUndefined(this.articlesObservable)) {
-      this.articlesObservable = this.http.get('https://neo-hu.github.io/blog/db/articles.json')
+      this.articlesObservable = this.http.get('/db/articles.json')
         .map(response => response.json());
     }
     return this.articlesObservable;
   }
   getCategories(): Observable<Category[]> {
-    return this.http.get('https://neo-hu.github.io/blog/db/categories.json')
+    return this.http.get('/db/categories.json')
        .map(response => response.json());
   }
 }
