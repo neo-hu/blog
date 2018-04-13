@@ -22,11 +22,7 @@ export class BlogCategoryComponent implements OnInit {
         this.articles = [];
         return r;
       }).switchMap(r => {
-        return r.sort((a, b) => {
-          return b['postdate'] < a['postdate'] ? -1 : 1;
-        }).sort((a, b) => {
-          return b['top'] < a['top'] ? -1 : 1;
-        });
+        return r;
       }).filter(item => {
         if ('category' in _) {
           return item.categories && item.categories.indexOf(_['category']) > -1;
