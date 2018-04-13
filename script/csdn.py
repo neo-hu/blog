@@ -103,8 +103,7 @@ def get_content(blog_url):
     for item in category_r:
         [v.extract() for v in item.children if not isinstance(v, element.NavigableString)]
         _l.append(item.text.strip())
-
-    return _l, str(article_content)
+    return _l, str(article_content).replace("https://img-blog.csdn.net", "http://img-blog.csdn.net")
 
 
 get_categories()
