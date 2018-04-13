@@ -38,12 +38,13 @@ def get_categories(uri=url):
     assert rep.status_code == 200
     content = rep.content
     soup = BeautifulSoup(content, "html.parser")
-    category_a = soup.select("#panel_Category a")
+    category_a = soup.select(".ClassSort-list a")
     r = []
     for itme in category_a:
         r.append({"title": itme.text.strip(), "url": itme.attrs.get("href").split("/")[-1], "d": d})
-    with open("db/categories.json", "wb") as f:
-        f.write(json.dumps(r))
+    if r:
+        with open("db/categories.json", "wb") as f:
+            f.write(json.dumps(r))
 
 
 def get_blogs(uri=url):
@@ -52,33 +53,29 @@ def get_blogs(uri=url):
     content = rep.content
     soup = BeautifulSoup(content, "html.parser")
     r = []
-    for t in ["article_toplist", "article_list"]:
-        blogs = soup.select("#%s .list_item" % t)
-        for blog in blogs:
-            try:
-                top = 0
-                description = blog.select_one(".article_description")
-                description_text = ""
-                if description:
-                    description_text = description.text
-                itme = blog.select_one(".link_title a")
-                title = itme.text.replace("\n", "").replace("\r", "").strip()
-                if t == "article_toplist":
-                    title = title.replace("[置顶]", "").strip()
-                    top = 1
-                postdate = blog.select_one(".article_manage .link_postdate").text.strip().split(" ")[0]
-                href = itme.attrs.get("href")
-                categories, article_content = get_content(urlparse.urljoin(uri, href))
-                _article_id = href.split("/")[-1]
-                print(_article_id)
-                with open("db/%s" % _article_id, "wb") as f:
-                    f.write(article_content)
-                r.append({"title": title, "url": _article_id, "postdate": postdate, "top": top,
-                          "description_text": description_text,
-                          "categories": categories})
-            except Exception as e:
-                print(e)
-                raise e
+    blogs = soup.select(".blog-units .blog-unit")
+    for blog in blogs:
+        try:
+            top = 0
+            description = blog.select_one("a p.text")
+            description_text = ""
+            if description:
+                description_text = description.text
+            item = blog.select_one("a")
+            h3 = item.select_one("h3")
+            title = h3.text.replace("\n", "").replace("\r", "").strip().replace('置顶', '').strip()
+            postdate = blog.select(".unit-control div div")[1].text.strip().split(" ")[0]
+            href = item.attrs.get("href")
+            categories, article_content = get_content(urlparse.urljoin(uri, href))
+            _article_id = href.split("/")[-1]
+            with open("db/%s" % _article_id, "wb") as f:
+                f.write(article_content)
+            r.append({"title": title, "url": _article_id, "postdate": postdate, "top": top,
+                      "description_text": description_text,
+                      "categories": categories})
+        except Exception as e:
+            print(e)
+            raise e
 
     papelist = soup.select("#papelist a")
     papelist = set(filter(lambda x: x.text == "下一页", papelist))
@@ -106,7 +103,6 @@ def get_content(blog_url):
 
 
 get_categories()
-raise
 
 r = get_blogs()
 with open("db/articles.json", "wb") as f:
