@@ -63,7 +63,10 @@ def get_blogs(uri=url):
                 description_text = description.text
             item = blog.select_one("a")
             h3 = item.select_one("h3")
-            title = h3.text.replace("\n", "").replace("\r", "").strip().replace('置顶', '').strip()
+            title = h3.text.replace("\n", "").replace("\r", "").strip()
+            if '置顶' in title:
+                title = title.replace('置顶', '').strip()
+                top = 1
             postdate = blog.select(".unit-control div div")[1].text.strip().split(" ")[0]
             href = item.attrs.get("href")
 
