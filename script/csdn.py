@@ -66,6 +66,7 @@ def get_blogs(uri=url):
             title = h3.text.replace("\n", "").replace("\r", "").strip().replace('置顶', '').strip()
             postdate = blog.select(".unit-control div div")[1].text.strip().split(" ")[0]
             href = item.attrs.get("href")
+
             categories, article_content = get_content(urlparse.urljoin(uri, href))
             _article_id = href.split("/")[-1]
             with open("db/%s" % _article_id, "wb") as f:
@@ -94,11 +95,12 @@ def get_content(blog_url):
     soup = BeautifulSoup(content, "html.parser")
     article_content = soup.select_one("#article_content")
     [x.extract() for x in article_content('script')]
-    category_r = soup.select(".category .category_r span[onclick]")
+    category_r = soup.select(".article_bar .article_tags a")
     _l = []
     for item in category_r:
         [v.extract() for v in item.children if not isinstance(v, element.NavigableString)]
         _l.append(item.text.strip())
+
     return _l, str(article_content)
 
 
