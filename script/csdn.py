@@ -6,6 +6,7 @@ from bs4 import element
 import requests
 import datetime
 import pickle
+import traceback
 import urlparse
 import sys
 import os
@@ -53,34 +54,39 @@ def get_blogs(uri=url):
     content = rep.content
     soup = BeautifulSoup(content, "html.parser")
     r = []
-    blogs = soup.select(".blog-units .blog-unit")
+    blogs = soup.select(".article-list .article-item-box")
     for blog in blogs:
         try:
             top = 0
-            description = blog.select_one("a p.text")
+            description = blog.select_one(".content")
             description_text = ""
             if description:
-                description_text = description.text
-            item = blog.select_one("a")
-            h3 = item.select_one("h3")
-            title = h3.text.replace("\n", "").replace("\r", "").strip()
-            if '置顶' in title:
-                title = title.replace('置顶', '').strip()
+                description_text = description.get_text(strip=True)
+            if blog.attrs.get("style", "") == "display: none;":
+                continue
+            h4 = blog.select_one("h4 a")
+            for l in h4.contents:
+                if isinstance(l, element.Tag):
+                    h4.contents.remove(l)
+            title = h4.get_text(strip=True).replace("\n", "").replace("\r", "").strip()
+            if title.startswith("转") or title.startswith("原"):
+                title = title[1:]
+            if blog.select_one(".settop"):
                 top = 1
-            postdate = blog.select(".unit-control div div")[1].text.strip().split(" ")[0]
-            href = item.attrs.get("href")
 
+            postdate = blog.select_one(".info-box p .date").get_text(strip=True).split(" ")[0]
+            href = h4.attrs.get("href")
             categories, article_content = get_content(urlparse.urljoin(uri, href))
             _article_id = href.split("/")[-1]
             with open("db/%s" % _article_id, "wb") as f:
                 f.write(article_content)
+            print(title)
             r.append({"title": title, "url": _article_id, "postdate": postdate, "top": top,
                       "description_text": description_text,
                       "categories": categories})
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             raise e
-
     papelist = soup.select(".pagination a")
     papelist = set(filter(lambda x: x.attrs.get('rel') and x.attrs.get('rel')[0] == "next", papelist))
     next_url = None
@@ -92,17 +98,15 @@ def get_blogs(uri=url):
 
 
 def get_content(blog_url):
+    print(blog_url)
     rep = requests.get(blog_url, headers=headers)
     assert rep.status_code == 200
     content = rep.content
     soup = BeautifulSoup(content, "html.parser")
-    article_content = soup.select_one("#article_content")
+    article_content = soup.select_one("#content_views")
     [x.extract() for x in article_content('script')]
-    category_r = soup.select(".article_bar .article_tags a")
+    [x.extract() for x in article_content('svg')]
     _l = []
-    for item in category_r:
-        [v.extract() for v in item.children if not isinstance(v, element.NavigableString)]
-        _l.append(item.text.strip())
     return _l, str(article_content).replace("https://img-blog.csdn.net", "http://img-blog.csdn.net")
 
 
