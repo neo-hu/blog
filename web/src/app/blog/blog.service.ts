@@ -18,12 +18,14 @@ export class BlogService {
   getArticles(): Observable<Article[]> {
     if (isUndefined(this.articlesObservable)) {
       this.articlesObservable = this.http.get('/db/articles.json')
+      // this.articlesObservable = this.http.get('http://ip8.me:8888/db/articles.json')
         .map(response => response.json());
     }
     return this.articlesObservable;
   }
   getCategories(): Observable<Category[]> {
     return this.http.get('/db/categories.json')
+    // return this.http.get('http://ip8.me:8888/db/categories.json')
        .map(response => response.json());
   }
 }

@@ -4,7 +4,7 @@
   <loading-bar ></loading-bar>
   <ng2-toasty [position]="'top-right'"></ng2-toasty>
 <div class="main-content">
-  <a href="javascript:void(-1);" (click)="showMenu=!showMenu" [class.show-menu]="showMenu" class="menu-btn bgc" [class.play]="audioStart">
+  <a href="javascript:void(-1);" (click)="menu()" [class.show-menu]="showMenu" class="menu-btn bgc" [class.play]="audioStart">
     <span class="lines"><span class="l1"></span><span class="l2"></span><span class="l3"></span></span>
   </a>
   <div [class.d-none]="showMenu">

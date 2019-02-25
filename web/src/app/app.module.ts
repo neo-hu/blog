@@ -33,6 +33,7 @@ import { CookieService } from './cookie.service';
 
 
 import { TreeDirective } from './about-me/tree.directive';
+import { TypeitDirective } from './typeit.directive';
 
 
 
@@ -53,6 +54,7 @@ import { TreeDirective } from './about-me/tree.directive';
   AudioComponent,
     KeysPipe,
     TreeDirective,
+    TypeitDirective,
 ],
   entryComponents: [ArticleModalContentComponent],
   imports: [

@@ -30,7 +30,7 @@
   </div>
 
   <h3>MY SKILLS</h3>
-  <p>“我一直深信不疑,术业有专攻;工欲善其事,必先利其器;”</p>
+  <p appTypeit="“我一直深信不疑,术业有专攻;工欲善其事,必先利其器;”"></p>
     <div *ngFor="let skill1 of skills " class="d-flex flex-wrap">
       <div *ngFor="let skill of skill1" class="px-4" >
         <div [circle-progress]="skill.progress" style="width: 130px; height: 130px"></div>

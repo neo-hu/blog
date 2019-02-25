@@ -51,6 +51,15 @@ export class AppComponent implements OnInit {
       });
   }
 
+  menu() {
+    this.showMenu = !this.showMenu;
+    // if(this.showMenu) {
+    //   document.body.className = 'show-menu';
+    // } else {
+    //   document.body.className = '';
+    // }
+  }
+
   changeAudio() {
     this.audioService.stop = !this.audioService.stop;
   }

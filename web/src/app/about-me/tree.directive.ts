@@ -1,7 +1,9 @@
 import {Directive, Input, ElementRef, OnInit, OnDestroy} from '@angular/core';
 import {Router} from '@angular/router';
-import oCanvas from 'ocanvas';
+// import oCanvas from 'ocanvas';
 import * as webfontloader from 'webfontloader';
+
+declare var oCanvas: any;
 
 @Directive({
   selector: '[tree]'
