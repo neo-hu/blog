@@ -8,9 +8,9 @@ import datetime
 import pickle
 import traceback
 import urlparse
+import collections
 import sys
 import os
-
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -20,7 +20,6 @@ sys.setdefaultencoding('utf-8')
 # blogs_tb = db["blogs"]
 if not os.path.exists("db"):
     os.mkdir("db")
-url = "http://blog.csdn.net/u010066807/article/list/1"
 d = datetime.datetime.now().date().strftime("%Y-%m-%d")
 headers = {"Host": "blog.csdn.net",
            "Connection": "keep-alive",
@@ -34,36 +33,28 @@ headers = {"Host": "blog.csdn.net",
            }
 
 
-def get_categories(uri=url):
-    rep = requests.get(uri, headers=headers)
-    assert rep.status_code == 200
-    content = rep.content
-    soup = BeautifulSoup(content, "html.parser")
-    category_a = soup.select(".ClassSort-list a")
-    r = []
-    for itme in category_a:
-        r.append({"title": itme.text.strip(), "url": itme.attrs.get("href").split("/")[-1], "d": d})
-    if r:
-        with open("db/categories.json", "wb") as f:
-            f.write(json.dumps(r))
 
 
-def get_blogs(uri=url):
-    rep = requests.get(uri, headers=headers)
-    assert rep.status_code == 200
-    content = rep.content
-    soup = BeautifulSoup(content, "html.parser")
-    r = []
-    blogs = soup.select(".article-list .article-item-box")
-    for blog in blogs:
-        try:
+def get_blogs_page(uri):
+    index = 1
+    while True:
+        print(uri % index)
+        rep = requests.get(uri % index, headers=headers)
+        assert rep.status_code == 200
+        content = rep.content
+        soup = BeautifulSoup(content, "html.parser")
+        blogs = soup.select(".article-list .article-item-box")
+        index += 1
+        if len(blogs) <= 0:
+            break
+        for blog in blogs:
+            if blog.attrs.get("style", "") == "display: none;":
+                continue
             top = 0
             description = blog.select_one(".content")
             description_text = ""
             if description:
                 description_text = description.get_text(strip=True)
-            if blog.attrs.get("style", "") == "display: none;":
-                continue
             h4 = blog.select_one("h4 a")
             for l in h4.contents:
                 if isinstance(l, element.Tag):
@@ -73,27 +64,50 @@ def get_blogs(uri=url):
                 title = title[1:]
             if blog.select_one(".settop"):
                 top = 1
-
             postdate = blog.select_one(".info-box p .date").get_text(strip=True).split(" ")[0]
             href = h4.attrs.get("href")
-            categories, article_content = get_content(urlparse.urljoin(uri, href))
             _article_id = href.split("/")[-1]
-            with open("db/%s" % _article_id, "wb") as f:
+            yield {"title": title, "url": _article_id, "postdate": postdate, "top": top,
+                   "description_text": description_text,
+                   "href": href}
+
+
+d = datetime.datetime.now().date().strftime("%Y-%m-%d")
+def get_categories():
+    rep = requests.get("http://blog.csdn.net/u010066807/article/list/1", headers=headers)
+    assert rep.status_code == 200
+    content = rep.content
+    soup = BeautifulSoup(content, "html.parser")
+    category_a = soup.select("#asideCategory ul li a")
+    r = collections.defaultdict(list)
+    r2 = []
+    for itme in category_a:
+        name = itme.select_one(".title").get_text(strip=True)
+        for b in get_blogs_page(itme.attrs['href']+"/%s"):
+            r[name].append(b['title'])
+        r2.append({'title': name, 'url': itme.attrs['href'].split("/")[-1], "d": d})
+    with open("db/categories.json", "wb") as f:
+        f.write(json.dumps(r2))
+    return r
+
+
+def get_blogs(categories):
+    cs = collections.defaultdict(list)
+    for c, articles in categories.items():
+        for article in articles:
+            cs[article].append(c)
+    r = []
+    blogs = get_blogs_page("http://blog.csdn.net/u010066807/article/list/%s")
+    for blog in blogs:
+        blog['categories'] = cs[blog['title']]
+        try:
+            article_content = get_content(blog['href'])
+            with open("db/%s" % blog['url'], "wb") as f:
                 f.write(article_content)
-            print(title)
-            r.append({"title": title, "url": _article_id, "postdate": postdate, "top": top,
-                      "description_text": description_text,
-                      "categories": categories})
+            r.append(blog)
         except Exception as e:
             traceback.print_exc()
             raise e
-    papelist = soup.select(".pagination a")
-    papelist = set(filter(lambda x: x.attrs.get('rel') and x.attrs.get('rel')[0] == "next", papelist))
-    next_url = None
-    if papelist:
-        next_url = papelist.pop().attrs.get("href")
-    if next_url:
-        r += get_blogs(next_url)
     return r
 
 
@@ -106,12 +120,10 @@ def get_content(blog_url):
     article_content = soup.select_one("#content_views")
     [x.extract() for x in article_content('script')]
     [x.extract() for x in article_content('svg')]
-    _l = []
-    return _l, str(article_content).replace("https://img-blog.csdn.net", "http://img-blog.csdn.net")
+    return str(article_content).replace("https://img-blog.csdn.net", "http://img-blog.csdn.net")
 
 
-get_categories()
-
-r = get_blogs()
+categories = get_categories()
+r = get_blogs(categories)
 with open("db/articles.json", "wb") as f:
     f.write(json.dumps(r))
